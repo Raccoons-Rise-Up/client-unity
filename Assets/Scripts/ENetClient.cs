@@ -9,67 +9,34 @@ namespace GameClient.Networking
     public class ENetClient : MonoBehaviour
     {
         public const byte CHANNEL_ID = 0;
+        private const int TIMEOUT_SEND = 1000 * 5;
+        private const int TIMEOUT_RECEIVE = 1000 * 30;
+        private const int MAX_FRAMES = 30; // game frames
 
         public static Peer Peer { get; set; }
 
         public string ip = "127.0.0.1";
-        public ushort port = 3000;
+        public ushort port = 8888;
 
-        public bool active = true;
+        private Host host;
 
         private void Start()
         {
+            Application.targetFrameRate = MAX_FRAMES;
+            Application.runInBackground = true;
+            DontDestroyOnLoad(gameObject);
+
             ENet.Library.Initialize();
 
-            using Host client = new Host();
+            host = new Host();
             var address = new Address();
 
             address.SetHost(ip);
             address.Port = port;
-            client.Create();
+            host.Create();
 
-            Peer = client.Connect(address);
-
-            while (active)
-            {
-                var polled = false;
-
-                while (!polled)
-                {
-                    if (client.CheckEvents(out ENet.Event netEvent) <= 0)
-                    {
-                        if (client.Service(15, out netEvent) <= 0)
-                            break;
-
-                        polled = true;
-                    }
-
-                    switch (netEvent.Type)
-                    {
-                        case ENet.EventType.None:
-                            break;
-
-                        case ENet.EventType.Connect:
-                            Debug.Log("Client connected to server");
-                            break;
-
-                        case ENet.EventType.Disconnect:
-                            Debug.Log("Client disconnected from server");
-                            break;
-
-                        case ENet.EventType.Timeout:
-                            Debug.Log("Client connection timeout");
-                            break;
-
-                        case ENet.EventType.Receive:
-                            Debug.Log("Packet received from server - Channel ID: " + netEvent.ChannelID + ", Data length: " + netEvent.Packet.Length);
-                            netEvent.Packet.Dispose();
-                            break;
-                    }
-                }
-
-                client.Flush();
-            }
+            Peer = host.Connect(address);
+            Peer.Timeout(0, TIMEOUT_RECEIVE, TIMEOUT_SEND);
         }
 
         private void Update()
@@ -79,6 +46,47 @@ namespace GameClient.Networking
                 var sendPacket = new ClientPacket(ClientPacketType.Disconnect);
                 ENetNetwork.Send(sendPacket, PacketFlags.Reliable);
             }
+        }
+
+        private void FixedUpdate()
+        {
+            if (!host.IsSet)
+                return;
+
+            if (host.CheckEvents(out ENet.Event netEvent) <= 0)
+            {
+                if (host.Service(15, out netEvent) <= 0)
+                    return;
+            }
+
+            switch (netEvent.Type)
+            {
+                case ENet.EventType.None:
+                    Debug.Log("Nothing");
+                    break;
+
+                case ENet.EventType.Connect:
+                    Debug.Log("Client connected to server");
+                    break;
+
+                case ENet.EventType.Disconnect:
+                    Debug.Log("Client disconnected from server");
+                    break;
+
+                case ENet.EventType.Timeout:
+                    Debug.Log("Client connection timeout");
+                    break;
+
+                case ENet.EventType.Receive:
+                    Debug.Log("Packet received from server - Channel ID: " + netEvent.ChannelID + ", Data length: " + netEvent.Packet.Length);
+                    netEvent.Packet.Dispose();
+                    break;
+            }
+
+            host.Flush();
+            host.Dispose();
+
+            ENet.Library.Deinitialize();
         }
     }
 }
