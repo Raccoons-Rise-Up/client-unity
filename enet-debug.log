@@ -541,3 +541,42 @@
 2021-07-02 13:46:26 [TRACE] [enet_host_destroy:4026] A ENet host object is being destroyed.
 2021-07-02 13:46:26 [TRACE] [enet_socket_destroy:5015] Socket destroyed
 2021-07-02 13:46:26 [TRACE] [enet_deinitialize:4826] Windows: ENet Deinit
+2021-07-02 13:56:27 [TRACE] [enet_initialize:4806] Windows: ENet init
+2021-07-02 13:56:27 [TRACE] [enet_host_create:3902] Creating ENet host object.
+2021-07-02 13:56:27 [TRACE] [enet_host_create:3932] Socket creation: IPv4 & IPv6 dual stack mode
+2021-07-02 13:56:27 [TRACE] [enet_host_create:3951] Buffers: Setting up
+2021-07-02 13:56:27 [TRACE] [enet_host_create:3957] Socket: Setting up options
+2021-07-02 13:56:27 [TRACE] [enet_host_create:3963] Address: Setting up
+2021-07-02 13:56:27 [TRACE] [enet_host_create:3967] Channels: Setting up
+2021-07-02 13:56:27 [TRACE] [enet_host_create:4002] Startup: Clearing queues
+2021-07-02 13:56:27 [TRACE] [enet_host_create:4019] Startup: Complete. Let's do this.
+2021-07-02 13:56:27 [TRACE] [enet_host_connect:4049] A ENet Host is trying to establish a connection.
+2021-07-02 13:56:32 [TRACE] [enet_host_destroy:4026] A ENet host object is being destroyed.
+2021-07-02 13:56:32 [TRACE] [enet_socket_destroy:5015] Socket destroyed
+2021-07-02 13:56:32 [TRACE] [enet_deinitialize:4826] Windows: ENet Deinit
+2021-07-02 13:56:55 [TRACE] [enet_initialize:4806] Windows: ENet init
+2021-07-02 13:56:55 [TRACE] [enet_host_create:3902] Creating ENet host object.
+2021-07-02 13:56:55 [TRACE] [enet_host_create:3932] Socket creation: IPv4 & IPv6 dual stack mode
+2021-07-02 13:56:55 [TRACE] [enet_host_create:3951] Buffers: Setting up
+2021-07-02 13:56:55 [TRACE] [enet_host_create:3957] Socket: Setting up options
+2021-07-02 13:56:55 [TRACE] [enet_host_create:3963] Address: Setting up
+2021-07-02 13:56:55 [TRACE] [enet_host_create:3967] Channels: Setting up
+2021-07-02 13:56:55 [TRACE] [enet_host_create:4002] Startup: Clearing queues
+2021-07-02 13:56:55 [TRACE] [enet_host_create:4019] Startup: Complete. Let's do this.
+2021-07-02 13:56:55 [TRACE] [enet_host_connect:4049] A ENet Host is trying to establish a connection.
+2021-07-02 13:57:00 [TRACE] [enet_host_destroy:4026] A ENet host object is being destroyed.
+2021-07-02 13:57:00 [TRACE] [enet_socket_destroy:5015] Socket destroyed
+2021-07-02 13:57:00 [TRACE] [enet_deinitialize:4826] Windows: ENet Deinit
+2021-07-02 14:38:17 [TRACE] [enet_initialize:4806] Windows: ENet init
+2021-07-02 14:38:17 [TRACE] [enet_host_create:3902] Creating ENet host object.
+2021-07-02 14:38:17 [TRACE] [enet_host_create:3932] Socket creation: IPv4 & IPv6 dual stack mode
+2021-07-02 14:38:17 [TRACE] [enet_host_create:3951] Buffers: Setting up
+2021-07-02 14:38:17 [TRACE] [enet_host_create:3957] Socket: Setting up options
+2021-07-02 14:38:17 [TRACE] [enet_host_create:3963] Address: Setting up
+2021-07-02 14:38:17 [TRACE] [enet_host_create:3967] Channels: Setting up
+2021-07-02 14:38:17 [TRACE] [enet_host_create:4002] Startup: Clearing queues
+2021-07-02 14:38:17 [TRACE] [enet_host_create:4019] Startup: Complete. Let's do this.
+2021-07-02 14:38:17 [TRACE] [enet_host_connect:4049] A ENet Host is trying to establish a connection.
+2021-07-02 14:38:22 [TRACE] [enet_host_destroy:4026] A ENet host object is being destroyed.
+2021-07-02 14:38:22 [TRACE] [enet_socket_destroy:5015] Socket destroyed
+2021-07-02 14:38:22 [TRACE] [enet_deinitialize:4826] Windows: ENet Deinit

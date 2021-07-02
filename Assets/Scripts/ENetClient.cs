@@ -37,6 +37,7 @@ namespace GameClient.Networking
 
             Peer = host.Connect(address);
             Peer.Timeout(0, TIMEOUT_RECEIVE, TIMEOUT_SEND);
+            Debug.Log("Attempting to connect...");
         }
 
         private void Update()
