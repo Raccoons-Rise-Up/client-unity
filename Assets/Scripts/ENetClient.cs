@@ -104,11 +104,18 @@ namespace GameClient.Networking
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.R)) 
+            if (Input.GetKeyDown(KeyCode.R))
             {
                 var sendPacket = new ClientPacket(ClientPacketType.Disconnect);
-                ENetNetwork.Send(sendPacket, PacketFlags.Reliable);
+                Send(Peer, sendPacket, PacketFlags.Reliable);
             }
+        }
+
+        private void Send(Peer peer, GamePacket gamePacket, PacketFlags packetFlags)
+        {
+            var packet = default(ENet.Packet);
+            packet.Create(gamePacket.Data, packetFlags);
+            peer.Send(ENetClient.m_ChannelID, ref packet);
         }
     }
 }
