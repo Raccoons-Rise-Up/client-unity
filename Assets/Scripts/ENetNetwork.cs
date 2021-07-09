@@ -1,5 +1,4 @@
 using ENet;
-
 using Common.Networking.Packet;
 
 namespace GameClient.Networking
@@ -10,7 +9,7 @@ namespace GameClient.Networking
         {
             var packet = default(ENet.Packet);
             packet.Create(gamePacket.Data, packetFlags);
-            ENetClient.Peer.Send(ENetClient.CHANNEL_ID, ref packet);
+            ENetClient.Peer.Send(ENetClient.m_ChannelID, ref packet);
         }
     }
 }
