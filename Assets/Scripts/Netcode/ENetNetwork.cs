@@ -1,7 +1,7 @@
 using ENet;
 using Common.Networking.Packet;
 
-namespace GameClient.Networking
+namespace KRU.Networking
 {
     public class ENetNetwork
     {

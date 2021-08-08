@@ -7,32 +7,38 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 using Common.Networking.Packet;
+using TMPro;
 
-namespace GameClient.Networking 
+namespace KRU.Networking 
 {
     public class ENetClient : MonoBehaviour
     {
-        public ConcurrentQueue<ClientPacket> m_Outgoing = new ConcurrentQueue<ClientPacket>();
+        // Unity Inspector Variables
+        public string m_IP = "127.0.0.1";
+        public ushort m_Port = 1234;
 
-        public const byte m_ChannelID = 0; // The channel all networking traffic will be going through
+        private readonly ConcurrentQueue<UnityInstruction> m_UnityInstructions = new ConcurrentQueue<UnityInstruction>(); // Need a way to communicate with the Unity thread from the ENet thread
+        private readonly ConcurrentQueue<ClientPacket> m_Outgoing = new ConcurrentQueue<ClientPacket>(); // The packets that are sent to the server
+
+        private const byte m_ChannelID = 0; // The channel all networking traffic will be going through
         private const int m_MaxFrames = 30; // The games FPS cap
 
-        public uint m_PingInterval = 1000; // Pings are used both to monitor the liveness of the connection and also to dynamically adjust the throttle during periods of low traffic so that the throttle has reasonable responsiveness during traffic spikes.
-        public uint m_Timeout = 5000; // Will be ignored if maximum timeout is exceeded
-        public uint m_TimeoutMinimum = 5000; // The timeout for server not sending the packet to the client sent from the server
-        public uint m_TimeoutMaximum = 5000; // The timeout for server not receiving the packet sent from the client
+        private readonly uint m_PingInterval = 1000; // Pings are used both to monitor the liveness of the connection and also to dynamically adjust the throttle during periods of low traffic so that the throttle has reasonable responsiveness during traffic spikes.
+        private readonly uint m_Timeout = 5000; // Will be ignored if maximum timeout is exceeded
+        private readonly uint m_TimeoutMinimum = 5000; // The timeout for server not sending the packet to the client sent from the server
+        private readonly uint m_TimeoutMaximum = 5000; // The timeout for server not receiving the packet sent from the client
 
-        public static Peer Peer { get; set; }
-
-        public string m_IP = "127.0.0.1";
-        public ushort m_Port = 8888;
+        private Peer m_Peer;
 
         private Thread m_WorkerThread;
-        public bool m_RunningNetCode;
-        public bool m_TryingToConnect;
-        public bool m_ConnectedToServer;
+        private bool m_RunningNetCode;
+        private bool m_TryingToConnect;
+        private bool m_ConnectedToServer;
+
+        private TMP_InputField m_InputField;
 
         private void Start()
         {
@@ -64,9 +70,9 @@ namespace GameClient.Networking
             address.Port = m_Port;
             client.Create();
 
-            Peer = client.Connect(address);
-            Peer.PingInterval(m_PingInterval);
-            Peer.Timeout(m_Timeout, m_TimeoutMinimum, m_TimeoutMaximum);
+            m_Peer = client.Connect(address);
+            m_Peer.PingInterval(m_PingInterval);
+            m_Peer.Timeout(m_Timeout, m_TimeoutMinimum, m_TimeoutMaximum);
             Debug.Log("Attempting to connect...");
 
             m_RunningNetCode = true;
@@ -82,7 +88,7 @@ namespace GameClient.Networking
                         case ClientPacketType.PurchaseItem:
                             Debug.Log("Sending purchase item request to server..");
 
-                            Send(Peer, clientPacket, PacketFlags.Reliable);
+                            Send(clientPacket, PacketFlags.Reliable);
 
                             break;
                     }
@@ -109,6 +115,8 @@ namespace GameClient.Networking
                             Debug.Log("Client connected to server");
                             m_TryingToConnect = false;
                             m_ConnectedToServer = true;
+
+                            m_UnityInstructions.Enqueue(UnityInstruction.LoadMainScene);
                             break;
 
                         case EventType.Disconnect:
@@ -142,20 +150,52 @@ namespace GameClient.Networking
             if (!m_RunningNetCode)
                 return;
 
-            if (Input.GetKeyDown(KeyCode.R))
+            while (m_UnityInstructions.TryDequeue(out UnityInstruction result)) 
             {
-                var data = new PacketPurchaseItem(0);
+                if (result == UnityInstruction.LoadMainScene) 
+                {
+                    StartCoroutine(LoadMainScene());
+                }
+            }
+        }
+
+        private IEnumerator LoadMainScene()
+        {
+            var asyncLoad = SceneManager.LoadSceneAsync("Main");
+
+            // Loading
+            while (!asyncLoad.isDone)
+                yield return null;
+            // Finished
+
+            m_InputField = GameObject.Find("Canvas").transform.Find("input_PurchaseItem").GetComponent<TMP_InputField>();
+        }
+
+        public void PurchaseItem() 
+        {
+            if (ushort.TryParse(m_InputField.text, out ushort itemId))
+            {
+                var data = new PacketPurchaseItem(itemId);
                 var clientPacket = new ClientPacket(ClientPacketType.PurchaseItem, data);
 
                 m_Outgoing.Enqueue(clientPacket);
             }
+            else 
+            {
+                Debug.LogWarning("Not a valid number");
+            }
         }
 
-        private void Send(Peer peer, GamePacket gamePacket, PacketFlags packetFlags)
+        private void Send(GamePacket gamePacket, PacketFlags packetFlags)
         {
             var packet = default(Packet);
             packet.Create(gamePacket.Data, packetFlags);
-            peer.Send(ENetClient.m_ChannelID, ref packet);
+            m_Peer.Send(m_ChannelID, ref packet);
         }
+    }
+
+    public enum UnityInstruction
+    {
+        LoadMainScene
     }
 }
