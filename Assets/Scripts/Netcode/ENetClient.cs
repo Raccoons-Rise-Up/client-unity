@@ -32,6 +32,7 @@ using UnityEngine.SceneManagement;
 
 using Common.Networking.Packet;
 using TMPro;
+using KRU.Game;
 
 namespace KRU.Networking 
 {
@@ -39,9 +40,13 @@ namespace KRU.Networking
     {
         // Unity Inspector Variables
         public string m_IP = "127.0.0.1";
-        public ushort m_Port = 1234;
+        public ushort m_Port = 25565;
+
+        public Transform m_MenuTranform;
+        private Menu m_Menu;
 
         private readonly ConcurrentQueue<UnityInstruction> m_UnityInstructions = new ConcurrentQueue<UnityInstruction>(); // Need a way to communicate with the Unity thread from the ENet thread
+        private readonly ConcurrentQueue<ENetInstruction> m_ENetInstructions = new ConcurrentQueue<ENetInstruction>(); // Need a way to communicate with the ENet thread from the Unity thread
         private readonly ConcurrentQueue<ClientPacket> m_Outgoing = new ConcurrentQueue<ClientPacket>(); // The packets that are sent to the server
 
         private const byte m_ChannelID = 0; // The channel all networking traffic will be going through
@@ -67,8 +72,12 @@ namespace KRU.Networking
             Application.runInBackground = true;
             DontDestroyOnLoad(gameObject);
 
+            m_Menu = m_MenuTranform.GetComponent<Menu>();
+
             // Make sure queues are completely drained before starting
             if (m_Outgoing != null) while (m_Outgoing.TryDequeue(out _)) ;
+            if (m_UnityInstructions != null) while (m_UnityInstructions.TryDequeue(out _)) ;
+            if (m_ENetInstructions != null) while (m_ENetInstructions.TryDequeue(out _)) ;
         }
 
         public void Connect() 
@@ -79,6 +88,13 @@ namespace KRU.Networking
             m_TryingToConnect = true;
             m_WorkerThread = new Thread(ThreadWorker);
             m_WorkerThread.Start();
+        }
+
+        public bool IsConnected() => m_ConnectedToServer;
+
+        public void EnqueueENetInstruction(ENetInstruction instruction) 
+        {
+            m_ENetInstructions.Enqueue(instruction);
         }
 
         private void ThreadWorker() 
@@ -100,6 +116,21 @@ namespace KRU.Networking
             while (m_RunningNetCode)
             {
                 var polled = false;
+
+                // ENet Instructions (from Unity Thread)
+                while (m_ENetInstructions.TryDequeue(out ENetInstruction result))
+                {
+                    if (result == ENetInstruction.CancelConnection)
+                    {
+                        if (m_ConnectedToServer)
+                            break;
+
+                        Debug.Log("Cancel connection");
+                        m_TryingToConnect = false;
+                        m_RunningNetCode = false;
+                        return;
+                    }
+                }
 
                 // Sending data
                 while (m_Outgoing.TryDequeue(out ClientPacket clientPacket)) 
@@ -136,7 +167,6 @@ namespace KRU.Networking
                             Debug.Log("Client connected to server");
                             m_TryingToConnect = false;
                             m_ConnectedToServer = true;
-
                             m_UnityInstructions.Enqueue(UnityInstruction.LoadMainScene);
                             break;
 
@@ -149,6 +179,7 @@ namespace KRU.Networking
                             Debug.Log("Client connection timeout");
                             m_TryingToConnect = false;
                             m_ConnectedToServer = false;
+                            m_UnityInstructions.Enqueue(UnityInstruction.LoadMainMenu);
                             break;
 
                         case EventType.Receive:
@@ -173,23 +204,16 @@ namespace KRU.Networking
 
             while (m_UnityInstructions.TryDequeue(out UnityInstruction result)) 
             {
+                if (result == UnityInstruction.LoadMainMenu) 
+                {
+                    m_Menu.FromConnectingToMainMenu();
+                }
+
                 if (result == UnityInstruction.LoadMainScene) 
                 {
-                    StartCoroutine(LoadMainScene());
+                    m_Menu.FromConnectingToMainScene();
                 }
             }
-        }
-
-        private IEnumerator LoadMainScene()
-        {
-            var asyncLoad = SceneManager.LoadSceneAsync("Main");
-
-            // Loading
-            while (!asyncLoad.isDone)
-                yield return null;
-            // Finished
-
-            m_InputField = GameObject.Find("Canvas").transform.Find("input_PurchaseItem").GetComponent<TMP_InputField>();
         }
 
         public void PurchaseItem() 
@@ -217,6 +241,12 @@ namespace KRU.Networking
 
     public enum UnityInstruction
     {
+        LoadMainMenu,
         LoadMainScene
+    }
+
+    public enum ENetInstruction 
+    {
+        CancelConnection
     }
 }
