@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 using KRU.Networking;
 
@@ -11,6 +12,7 @@ namespace KRU.Game
         public GameObject m_MenuCanvas;
 
         public GameObject m_SectionMainMenu;
+        public GameObject m_SectionLogin;
         public GameObject m_SectionConnecting;
         public GameObject m_SectionOptions;
         public GameObject m_SectionCredits;
@@ -23,6 +25,7 @@ namespace KRU.Game
         private ENetClient m_ClientScript;
 
         private bool m_InMainMenu;
+        private bool m_InLogin;
         private bool m_InConnecting;
         private bool m_InOptions;
         private bool m_InCredits;
@@ -36,6 +39,7 @@ namespace KRU.Game
             m_InMainMenu = true;
             m_MenuCanvas.SetActive(true);
             m_SectionMainMenu.SetActive(true);
+            m_SectionLogin.SetActive(false);
             m_SectionConnecting.SetActive(false);
             m_SectionOptions.SetActive(false);
             m_SectionCredits.SetActive(false);
@@ -61,6 +65,14 @@ namespace KRU.Game
                 {
                     m_InMainMenu = true;
                     m_MenuCanvas.SetActive(true);
+                    m_SectionMainMenu.SetActive(true);
+                }
+
+                if (m_InLogin) 
+                {
+                    // Go back to the main menu
+                    m_InLogin = false;
+                    m_SectionLogin.SetActive(false);
                     m_SectionMainMenu.SetActive(true);
                 }
 
@@ -110,21 +122,49 @@ namespace KRU.Game
             m_BtnConnect.interactable = false;
         }
 
-        /// <summary>
-        /// Main Menu 'Connect' button to connect to the ENet-CSharp server.
-        /// </summary>
-        public void BtnConnect()
+        IEnumerator GetRequest(string url)
         {
-            m_InMainMenu = false;
-            m_InConnecting = true;
-            m_SectionMainMenu.SetActive(false);
-            m_SectionConnecting.SetActive(true);
-            m_ClientScript.Connect();
+            using UnityWebRequest webRequest = UnityWebRequest.Get(url);
+            // Request and wait for the desired page.
+            yield return webRequest.SendWebRequest();
+
+            string[] pages = url.Split('/');
+            int page = pages.Length - 1;
+
+            switch (webRequest.result)
+            {
+                case UnityWebRequest.Result.ConnectionError:
+                case UnityWebRequest.Result.DataProcessingError:
+                    Debug.LogError(pages[page] + ": Error: " + webRequest.error);
+                    break;
+                case UnityWebRequest.Result.ProtocolError:
+                    Debug.LogError(pages[page] + ": HTTP Error: " + webRequest.error);
+                    break;
+                case UnityWebRequest.Result.Success:
+                    Debug.Log(pages[page] + ":\nReceived: " + webRequest.downloadHandler.text);
+
+                    var test = JsonUtility.FromJson<WebAccount>(webRequest.downloadHandler.text);
+                    Debug.Log(test.message);
+
+                    break;
+            }
         }
 
-        /// <summary>
-        /// Main Menu 'Options' button
-        /// </summary>
+        public void BtnMainMenuLogin()
+        {
+            m_InMainMenu = false;
+            m_InLogin = true;
+            m_SectionMainMenu.SetActive(false);
+            m_SectionLogin.SetActive(true);
+        }
+
+        public void BtnLogin() 
+        {
+            StartCoroutine(GetRequest("localhost:4000/api"));
+
+            //m_ClientScript.Connect();
+        }
+
         public void BtnOptions() 
         {
             m_InMainMenu = false;
@@ -133,9 +173,6 @@ namespace KRU.Game
             m_SectionOptions.SetActive(true);
         }
 
-        /// <summary>
-        /// Main Menu 'Credits' button
-        /// </summary>
         public void BtnCredits() 
         {
             m_InMainMenu = false;
@@ -144,9 +181,6 @@ namespace KRU.Game
             m_SectionCredits.SetActive(true);
         }
 
-        /// <summary>
-        /// Main Menu 'Exit' button
-        /// </summary>
         public void BtnExit() 
         {
             Application.Quit();
