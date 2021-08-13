@@ -23,6 +23,8 @@ using UnityEngine;
 
 public class Game : MonoBehaviour
 {
+    public int m_Gold = 1000;
+
     private void Start()
     {
         QualitySettings.vSyncCount = 1; // Sync framerate to monitor refresh rate

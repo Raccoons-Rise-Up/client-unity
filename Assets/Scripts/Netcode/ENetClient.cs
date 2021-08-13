@@ -23,6 +23,7 @@ using ENet;
 using EventType = ENet.EventType;  // fixes CS0104 ambigous reference between the same thing in UnityEngine
 using Event = ENet.Event;          // fixes CS0104 ambigous reference between the same thing in UnityEngine
 
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -31,6 +32,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 using Common.Networking.Packet;
+using Common.Networking.IO;
 using TMPro;
 using KRU.Game;
 
@@ -43,7 +45,10 @@ namespace KRU.Networking
         public ushort m_Port = 25565;
 
         public Transform m_MenuTranform;
-        private Menu m_Menu;
+        private UIMenu m_MenuScript;
+
+        public Transform m_TerminalTransform;
+        private UITerminal m_TerminalScript;
 
         private readonly ConcurrentQueue<UnityInstruction> m_UnityInstructions = new ConcurrentQueue<UnityInstruction>(); // Need a way to communicate with the Unity thread from the ENet thread
         private readonly ConcurrentQueue<ENetInstruction> m_ENetInstructions = new ConcurrentQueue<ENetInstruction>(); // Need a way to communicate with the ENet thread from the Unity thread
@@ -72,7 +77,8 @@ namespace KRU.Networking
             Application.runInBackground = true;
             DontDestroyOnLoad(gameObject);
 
-            m_Menu = m_MenuTranform.GetComponent<Menu>();
+            m_MenuScript = m_MenuTranform.GetComponent<UIMenu>();
+            m_TerminalScript = m_TerminalTransform.GetComponent<UITerminal>();
 
             // Make sure queues are completely drained before starting
             if (m_Outgoing != null) while (m_Outgoing.TryDequeue(out _)) ;
@@ -167,7 +173,9 @@ namespace KRU.Networking
                             Debug.Log("Client connected to server");
                             m_TryingToConnect = false;
                             m_ConnectedToServer = true;
-                            m_UnityInstructions.Enqueue(UnityInstruction.LoadMainScene);
+
+
+                            m_UnityInstructions.Enqueue(new UnityInstruction { m_Type = UnityInstruction.Type.LoadMainScene });
                             break;
 
                         case EventType.Disconnect:
@@ -179,13 +187,35 @@ namespace KRU.Networking
                             Debug.Log("Client connection timeout");
                             m_TryingToConnect = false;
                             m_ConnectedToServer = false;
-                            m_UnityInstructions.Enqueue(UnityInstruction.LoadMainMenu);
+                            m_UnityInstructions.Enqueue(new UnityInstruction { m_Type = UnityInstruction.Type.LoadMainMenu });
                             break;
 
                         case EventType.Receive:
-                            var incomingPacket = netEvent.Packet;
-                            Debug.Log("Packet received from server - Channel ID: " + netEvent.ChannelID + ", Data length: " + incomingPacket.Length);
-                            incomingPacket.Dispose();
+                            var packet = netEvent.Packet;
+                            Debug.Log("Packet received from server - Channel ID: " + netEvent.ChannelID + ", Data length: " + packet.Length);
+
+                            var readBuffer = new byte[1024];
+                            var readStream = new MemoryStream(readBuffer);
+                            var reader = new BinaryReader(readStream);
+
+                            readStream.Position = 0;
+                            netEvent.Packet.CopyTo(readBuffer);
+
+                            var opcode = (ServerPacketType)reader.ReadByte();
+
+                            if (opcode == ServerPacketType.PurchasedItem) 
+                            {
+                                var data = new PacketPurchasedItem();
+                                var packetReader = new PacketReader(readBuffer);
+                                data.Read(packetReader);
+
+                                m_UnityInstructions.Enqueue(new UnityInstruction { 
+                                    m_Type = UnityInstruction.Type.LogMessage,
+                                    m_Message = $"You purchased item: {data.m_ItemID} for x gold." 
+                                });
+                            }
+
+                            packet.Dispose();
                             break;
                     }
                 }
@@ -204,31 +234,29 @@ namespace KRU.Networking
 
             while (m_UnityInstructions.TryDequeue(out UnityInstruction result)) 
             {
-                if (result == UnityInstruction.LoadMainMenu) 
+                if (result.m_Type == UnityInstruction.Type.LogMessage) 
                 {
-                    m_Menu.FromConnectingToMainMenu();
+                    m_TerminalScript.Log(result.m_Message);
                 }
 
-                if (result == UnityInstruction.LoadMainScene) 
+                if (result.m_Type == UnityInstruction.Type.LoadMainMenu) 
                 {
-                    m_Menu.FromConnectingToMainScene();
+                    m_MenuScript.FromConnectingToMainMenu();
+                }
+
+                if (result.m_Type == UnityInstruction.Type.LoadMainScene) 
+                {
+                    m_MenuScript.FromConnectingToMainScene();
                 }
             }
         }
 
-        public void PurchaseItem() 
+        public void PurchaseItem(int itemId) 
         {
-            if (ushort.TryParse(m_InputField.text, out ushort itemId))
-            {
-                var data = new PacketPurchaseItem(itemId);
-                var clientPacket = new ClientPacket(ClientPacketType.PurchaseItem, data);
+            var data = new PacketPurchaseItem((ushort)itemId);
+            var clientPacket = new ClientPacket(ClientPacketType.PurchaseItem, data);
 
-                m_Outgoing.Enqueue(clientPacket);
-            }
-            else 
-            {
-                Debug.LogWarning("Not a valid number");
-            }
+            m_Outgoing.Enqueue(clientPacket);
         }
 
         private void Send(GamePacket gamePacket, PacketFlags packetFlags)
@@ -239,10 +267,17 @@ namespace KRU.Networking
         }
     }
 
-    public enum UnityInstruction
+    public class UnityInstruction 
     {
-        LoadMainMenu,
-        LoadMainScene
+        public enum Type 
+        {
+            LoadMainMenu,
+            LoadMainScene,
+            LogMessage
+        }
+
+        public Type m_Type;
+        public string m_Message;
     }
 
     public enum ENetInstruction 

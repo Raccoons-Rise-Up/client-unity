@@ -6,7 +6,7 @@ using KRU.Networking;
 
 namespace KRU.Game
 {
-    public class Menu : MonoBehaviour
+    public class UIMenu : MonoBehaviour
     {
         public GameObject m_MenuCanvas;
 
