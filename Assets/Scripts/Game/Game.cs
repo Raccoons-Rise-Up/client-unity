@@ -30,4 +30,14 @@ public class Game : MonoBehaviour
         QualitySettings.vSyncCount = 1; // Sync framerate to monitor refresh rate
         Application.targetFrameRate = 60; // FPS if VSync is turned off
     }
+
+    private void FixedUpdate()
+    {
+        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+
+        if (hit.collider != null)
+        {
+            Debug.Log("Target Position: " + hit.collider.gameObject.transform.position);
+        }
+    }
 }
