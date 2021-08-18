@@ -11,6 +11,8 @@ namespace KRU.Game
 {
     public class UILogin : MonoBehaviour
     {
+        public string username;
+
         public Transform menuTransform;
         private UIMenu UIMenuScript;
 
@@ -74,6 +76,8 @@ namespace KRU.Game
                 username = inputUsername.text,
                 password = inputPassword.text
             };
+
+            this.username = username;
 
             StartCoroutine(PostRequest("localhost:4000/api/login", webAcc.ToJsonString(), WebLoginResponse));
         }

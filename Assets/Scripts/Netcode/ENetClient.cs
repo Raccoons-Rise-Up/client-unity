@@ -142,8 +142,14 @@ namespace KRU.Networking
                 {
                     switch (clientPacket.Opcode) 
                     {
+                        case ClientPacketType.Login:
+                            Debug.Log("Sending login request to game server..");
+
+                            Send(clientPacket, PacketFlags.Reliable);
+
+                            break;
                         case ClientPacketType.PurchaseItem:
-                            Debug.Log("Sending purchase item request to server..");
+                            Debug.Log("Sending purchase item request to game server..");
 
                             Send(clientPacket, PacketFlags.Reliable);
 
@@ -169,11 +175,19 @@ namespace KRU.Networking
                             break;
 
                         case EventType.Connect:
-                            Debug.Log("Client connected to server");
+                            // Successfully connected to the game server
+                            Debug.Log("Client connected to game server");
+
+                            // Send login request
+                            var clientPacket = new ClientPacket(ClientPacketType.Login, new PacketLogin(loginScript.username));
+
+                            outgoing.Enqueue(clientPacket);
+
+                            // Keep track of networking logic
                             tryingToConnect = false;
                             connectedToServer = true;
 
-
+                            // Load the main game 'scene'
                             unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.LoadMainScene });
                             break;
 

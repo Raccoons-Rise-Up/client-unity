@@ -1,0 +1,42 @@
+﻿/*
+ * Kittens Rise Up is a long term progression MMORPG.
+ * Copyright (C) 2021  valkyrienyanko
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * Contact valkyrienyanko by joining the Kittens Rise Up discord at
+ * https://discord.gg/cDNf8ja or email sebastianbelle074@protonmail.com
+ */
+
+using Common.Networking.Message;
+using Common.Networking.IO;
+using Common.Networking.Packet;
+
+namespace KRU.Networking
+{
+    public class PacketLogin : IWritable
+    {
+        public string username;
+
+        public PacketLogin(string username) 
+        {
+            this.username = username;
+        }
+
+        public void Write(PacketWriter writer)
+        {
+            writer.Write(username);
+        }
+    }
+}
