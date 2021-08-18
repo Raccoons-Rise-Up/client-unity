@@ -21,23 +21,28 @@
 
 using UnityEngine;
 
-public class Game : MonoBehaviour
+namespace KRU.Game 
 {
-    public int m_Gold = 1000;
-
-    private void Start()
+    public class Game : MonoBehaviour
     {
-        QualitySettings.vSyncCount = 1; // Sync framerate to monitor refresh rate
-        Application.targetFrameRate = 60; // FPS if VSync is turned off
-    }
+        public bool inGame;
 
-    private void FixedUpdate()
-    {
-        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+        public int gold = 1000;
 
-        if (hit.collider != null)
+        private void Start()
         {
-            Debug.Log("Target Position: " + hit.collider.gameObject.transform.position);
+            QualitySettings.vSyncCount = 1; // Sync framerate to monitor refresh rate
+            Application.targetFrameRate = 60; // FPS if VSync is turned off
+        }
+
+        private void FixedUpdate()
+        {
+            RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+
+            if (hit.collider != null)
+            {
+                Debug.Log("Target Position: " + hit.collider.gameObject.transform.position);
+            }
         }
     }
 }

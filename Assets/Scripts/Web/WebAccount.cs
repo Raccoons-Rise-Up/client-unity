@@ -1,7 +1,13 @@
-using System;
+using UnityEngine;
 
-[Serializable]
+[System.Serializable]
 public class WebAccount
 {
-    public string message;
+    public string username;
+    public string password;
+
+    public string ToJsonString() 
+    {
+        return JsonUtility.ToJson(this);
+    }
 }

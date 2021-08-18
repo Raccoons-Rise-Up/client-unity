@@ -27,16 +27,16 @@ namespace KRU.Networking
 {
     public class PacketPurchaseItem : IWritable
     {
-        private readonly ushort m_ItemID;
+        private readonly ushort ItemID;
 
-        public PacketPurchaseItem(ushort m_ItemID)
+        public PacketPurchaseItem(ushort ItemID)
         {
-            this.m_ItemID = m_ItemID;
+            this.ItemID = ItemID;
         }
 
         public void Write(PacketWriter writer)
         {
-            writer.Write(m_ItemID);
+            writer.Write(ItemID);
         }
     }
 }

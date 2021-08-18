@@ -670,13 +670,13 @@ namespace ENet {
 		public void SetChecksumCallback(IntPtr callback) {
 			ThrowIfNotCreated();
 
-			Native.enet_host_set_checksum_callback(nativeHost, callback);
+			Native.enet_host_set_checksucallback(nativeHost, callback);
 		}
 
 		public void SetChecksumCallback(ChecksumCallback callback) {
 			ThrowIfNotCreated();
 
-			Native.enet_host_set_checksum_callback(nativeHost, Marshal.GetFunctionPointerForDelegate(callback));
+			Native.enet_host_set_checksucallback(nativeHost, Marshal.GetFunctionPointerForDelegate(callback));
 		}
 
 		public void Flush() {
@@ -1100,7 +1100,7 @@ namespace ENet {
 		internal static extern void enet_host_set_intercept_callback(IntPtr host, IntPtr callback);
 
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern void enet_host_set_checksum_callback(IntPtr host, IntPtr callback);
+		internal static extern void enet_host_set_checksucallback(IntPtr host, IntPtr callback);
 
 		[DllImport(nativeLibrary, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void enet_host_flush(IntPtr host);

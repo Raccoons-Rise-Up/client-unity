@@ -5,12 +5,12 @@ using TMPro;
 
 public class UITerminal : MonoBehaviour
 {
-    public GameObject m_Content;
-    public GameObject m_TextOutputPrefab;
+    public GameObject content;
+    public GameObject textOutputPrefab;
 
     public void Log(string message) 
     {
-        var textGo = Instantiate(m_TextOutputPrefab, m_Content.transform);
+        var textGo = Instantiate(textOutputPrefab, content.transform);
         var textComponent = textGo.GetComponent<TextMeshProUGUI>();
         textComponent.text = message;
     }

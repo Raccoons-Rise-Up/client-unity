@@ -7,12 +7,12 @@ using Common.Networking.Message;
 
 public class PacketPurchasedItem : IReadable
 {
-    public ServerPacketType m_ID;
-    public uint m_ItemID;
+    public ServerPacketType id;
+    public uint itemId;
 
     public void Read(PacketReader reader)
     {
-        m_ID = (ServerPacketType)reader.ReadByte();
-        m_ItemID = reader.ReadUInt16();
+        id = (ServerPacketType)reader.ReadByte();
+        itemId = reader.ReadUInt16();
     }
 }
