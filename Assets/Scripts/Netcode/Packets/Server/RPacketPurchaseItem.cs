@@ -9,13 +9,13 @@ namespace KRU.Networking
 {
     public class RPacketPurchaseItem : IReadable
     {
-        public ServerPacketType id;
         public uint itemId;
 
         public void Read(PacketReader reader)
         {
-            id = (ServerPacketType)reader.ReadByte();
             itemId = reader.ReadUInt16();
+
+            reader.Dispose();
         }
     }
 }

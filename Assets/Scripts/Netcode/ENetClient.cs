@@ -55,6 +55,8 @@ namespace KRU.Networking
         public const int CLIENT_VERSION_MINOR = 1;
         public const int CLIENT_VERSION_PATCH = 0;
 
+        private const int PACKET_SIZE_MAX = 1024;
+
         private readonly ConcurrentQueue<UnityInstruction> unityInstructions = new ConcurrentQueue<UnityInstruction>(); // Need a way to communicate with the Unity thread from the ENet thread
         private readonly ConcurrentQueue<ENetInstruction> ENetInstructions = new ConcurrentQueue<ENetInstruction>(); // Need a way to communicate with the ENet thread from the Unity thread
         private readonly ConcurrentQueue<ClientPacket> outgoing = new ConcurrentQueue<ClientPacket>(); // The packets that are sent to the server
@@ -185,10 +187,10 @@ namespace KRU.Networking
 
                             // Send login request
                             var clientPacket = new ClientPacket((byte)ClientPacketType.Login, new WPacketLogin { 
-                                username = loginScript.username,
-                                versionMajor = CLIENT_VERSION_MAJOR,
-                                versionMinor = CLIENT_VERSION_MINOR,
-                                versionPatch = CLIENT_VERSION_PATCH
+                                Username = loginScript.username,
+                                VersionMajor = CLIENT_VERSION_MAJOR,
+                                VersionMinor = CLIENT_VERSION_MINOR,
+                                VersionPatch = CLIENT_VERSION_PATCH
                             });
 
                             outgoing.Enqueue(clientPacket);
@@ -216,22 +218,20 @@ namespace KRU.Networking
                             var packet = netEvent.Packet;
                             Debug.Log("Packet received from server - Channel ID: " + netEvent.ChannelID + ", Data length: " + packet.Length);
 
-                            var readBuffer = new byte[1024];
-                            var readStream = new MemoryStream(readBuffer);
-                            var reader = new BinaryReader(readStream);
+                            var readBuffer = new byte[PACKET_SIZE_MAX];
+                            var packetReader = new PacketReader(readBuffer);
+                            //packetReader.BaseStream.Position = 0;
 
-                            readStream.Position = 0;
                             netEvent.Packet.CopyTo(readBuffer);
 
-                            var opcode = (ServerPacketType)reader.ReadByte();
+                            var opcode = (ServerPacketType)packetReader.ReadByte();
 
                             if (opcode == ServerPacketType.LoginResponse) 
                             {
                                 var data = new RPacketLogin();
-                                var packetReader = new PacketReader(readBuffer);
                                 data.Read(packetReader);
 
-                                if (data.Opcode == LoginOpcode.VERSION_MISMATCH)
+                                if (data.LoginOpcode == LoginOpcode.VERSION_MISMATCH)
                                 {
                                     var serverVersion = $"{data.VersionMajor}.{data.VersionMinor}.{data.VersionPatch}";
                                     var clientVersion = $"{CLIENT_VERSION_MAJOR}.{CLIENT_VERSION_MINOR}.{CLIENT_VERSION_PATCH}";
@@ -243,7 +243,7 @@ namespace KRU.Networking
                                     });
                                 }
 
-                                if (data.Opcode == LoginOpcode.LOGIN_SUCCESS) 
+                                if (data.LoginOpcode == LoginOpcode.LOGIN_SUCCESS) 
                                 {
                                     // Load the main game 'scene'
                                     unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.LoadMainScene });
@@ -253,7 +253,6 @@ namespace KRU.Networking
                             if (opcode == ServerPacketType.PurchasedItem) 
                             {
                                 var data = new RPacketPurchaseItem();
-                                var packetReader = new PacketReader(readBuffer);
                                 data.Read(packetReader);
 
                                 unityInstructions.Enqueue(new UnityInstruction { 
@@ -309,7 +308,7 @@ namespace KRU.Networking
 
         public void PurchaseItem(int itemId) 
         {
-            var data = new WPacketPurchaseItem((ushort)itemId);
+            var data = new WPacketPurchaseItem { ItemID = (ushort)itemId };
             var clientPacket = new ClientPacket((byte)ClientPacketType.PurchaseItem, data);
 
             outgoing.Enqueue(clientPacket);

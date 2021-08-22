@@ -27,17 +27,17 @@ namespace KRU.Networking
 {
     public class WPacketLogin : IWritable
     {
-        public byte versionMajor;
-        public byte versionMinor;
-        public byte versionPatch;
-        public string username;
+        public byte VersionMajor { private get; set; }
+        public byte VersionMinor { private get; set; }
+        public byte VersionPatch { private get; set; }
+        public string Username { private get; set; }
 
         public void Write(PacketWriter writer)
         {
-            writer.Write(versionMajor);
-            writer.Write(versionMinor);
-            writer.Write(versionPatch);
-            writer.Write(username);
+            writer.Write(VersionMajor);
+            writer.Write(VersionMinor);
+            writer.Write(VersionPatch);
+            writer.Write(Username);
         }
     }
 }
