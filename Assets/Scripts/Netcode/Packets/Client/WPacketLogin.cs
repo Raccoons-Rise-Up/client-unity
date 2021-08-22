@@ -25,7 +25,7 @@ using Common.Networking.Packet;
 
 namespace KRU.Networking
 {
-    public class PacketLogin : IWritable
+    public class WPacketLogin : IWritable
     {
         public byte versionMajor;
         public byte versionMinor;

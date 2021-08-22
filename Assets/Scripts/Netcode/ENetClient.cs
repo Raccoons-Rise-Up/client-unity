@@ -184,7 +184,7 @@ namespace KRU.Networking
                             Debug.Log("Client connected to game server");
 
                             // Send login request
-                            var clientPacket = new ClientPacket(ClientPacketType.Login, new PacketLogin { 
+                            var clientPacket = new ClientPacket(ClientPacketType.Login, new WPacketLogin { 
                                 username = loginScript.username,
                                 versionMajor = CLIENT_VERSION_MAJOR,
                                 versionMinor = CLIENT_VERSION_MINOR,
@@ -229,7 +229,7 @@ namespace KRU.Networking
 
                             if (opcode == ServerPacketType.PurchasedItem) 
                             {
-                                var data = new PacketPurchasedItem();
+                                var data = new RPacketPurchaseItem();
                                 var packetReader = new PacketReader(readBuffer);
                                 data.Read(packetReader);
 
@@ -283,7 +283,7 @@ namespace KRU.Networking
 
         public void PurchaseItem(int itemId) 
         {
-            var data = new PacketPurchaseItem((ushort)itemId);
+            var data = new WPacketPurchaseItem((ushort)itemId);
             var clientPacket = new ClientPacket(ClientPacketType.PurchaseItem, data);
 
             outgoing.Enqueue(clientPacket);

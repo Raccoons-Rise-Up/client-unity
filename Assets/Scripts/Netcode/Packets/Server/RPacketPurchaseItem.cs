@@ -5,7 +5,7 @@ using Common.Networking.Packet;
 using Common.Networking.IO;
 using Common.Networking.Message;
 
-public class PacketPurchasedItem : IReadable
+public class RPacketPurchaseItem : IReadable
 {
     public ServerPacketType id;
     public uint itemId;

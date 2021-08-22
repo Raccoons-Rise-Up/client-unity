@@ -25,11 +25,11 @@ using Common.Networking.Packet;
 
 namespace KRU.Networking 
 {
-    public class PacketPurchaseItem : IWritable
+    public class WPacketPurchaseItem : IWritable
     {
         private readonly ushort ItemID;
 
-        public PacketPurchaseItem(ushort ItemID)
+        public WPacketPurchaseItem(ushort ItemID)
         {
             this.ItemID = ItemID;
         }
