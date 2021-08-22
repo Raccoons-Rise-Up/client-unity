@@ -122,7 +122,7 @@ while (unityInstructions.TryDequeue(out UnityInstruction result))
 4. [Creating the Reader Packet Server Side](#creating-the-reader-packet-server-side)
 
 #### Creating the Writer Packet
-Create a new packet class under `Assets/Scripts/Netcode/Packets/Client`, the packet class should be called something like `PacketPositionData` or `PacketDisconnect`. (currently there is no easy way to distinguish a reader packet from a writer packet other then its well defined name and the folder group its in, this may change in the future by adding the prefix "Writer" / "Reader")
+Create a new packet class under `Assets/Scripts/Netcode/Packets/Client`, the packet class should be called something like `WPacketPositionData` or `WPacketDisconnect`. (note that the W prefix means "write", if a reader packet was being created the R prefix should go in front)
 
 Use the following code as a template
 ```cs
@@ -132,11 +132,11 @@ using Common.Networking.Packet;
 
 namespace KRU.Networking 
 {
-    public class PacketSendSomething : IWritable
+    public class WPacketSendSomething : IWritable
     {
         private readonly ushort ItemID;
 
-        public PacketSendSomething(ushort ItemID)
+        public WPacketSendSomething(ushort ItemID)
         {
             this.ItemID = ItemID;
         }
@@ -167,7 +167,7 @@ Navigate to `Assets/Scripts/Netcode/ENetClient.cs`, this is the main networking 
 
 First, create the packet
 ```cs
-var data = new PacketSendSomething((ushort)itemId);
+var data = new WPacketSendSomething((ushort)itemId);
 var clientPacket = new ClientPacket(ClientPacketType.PurchaseItem, data);
 ```
 
@@ -195,7 +195,7 @@ while (outgoing.TryDequeue(out ClientPacket clientPacket))
 #### Creating the Reader Packet Server Side
 The server needs to know how to read this packet.
 
-In the server, navigate to `src/Server/Packets/Client/` and create a class named `PacketSendSomething.cs`
+In the server, navigate to `src/Server/Packets/Client/` and create a class named `RPacketSendSomething.cs`
 
 Use the following code as a template.
 
@@ -216,7 +216,7 @@ namespace GameServer.Server.Packets
     // long    -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807       Int64
     // ulong   0 to 18,446,744,073,709,551,615                               UInt64
 
-    public class PacketSendSomething : IReadable
+    public class RPacketSendSomething : IReadable
     {
         public ClientPacketType id; // the opcode
         public uint itemId;
@@ -234,9 +234,11 @@ Finally in `src/Server/ENetServer.cs` add the following code.
 ```cs
 if (opcode == ClientPacketType.SendSomething) 
 {
-    var data = new PacketSendSomething();
+    var data = new RPacketSendSomething();
     var packetReader = new PacketReader(readBuffer);
     data.Read(packetReader);
+    
+    ClientPacketHandleSendSomething(data); // create a private static method for readability and organization
 }
 ```
 
