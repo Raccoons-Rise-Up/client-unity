@@ -43,6 +43,7 @@ while (ENetInstructions.TryDequeue(out ENetInstruction result))
 {
     if (result == ENetInstruction.CancelConnection)
     {
+        // some random code here
         Debug.Log("Cancel connection");
         connectedToServer = false;
         tryingToConnect = false;
