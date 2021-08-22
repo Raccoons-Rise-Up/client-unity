@@ -20,7 +20,7 @@ namespace KRU.Game
         [HideInInspector] public Button btnConnect;
 
         public Transform webServerResponseTextTransform;
-        [HideInInspector] public TextMeshProUGUI webServerResponseText;
+        [HideInInspector] public TextMeshProUGUI loginFeedbackText;
 
         public Transform inputUsernameTransform;
         private TMP_InputField inputUsername;
@@ -41,8 +41,8 @@ namespace KRU.Game
         {
             UIMenuScript = menuTransform.GetComponent<UIMenu>();
             btnConnect = btnConnectTransform.GetComponent<Button>();
-            webServerResponseText = webServerResponseTextTransform.GetComponent<TextMeshProUGUI>();
-            webServerResponseText.text = "";
+            loginFeedbackText = webServerResponseTextTransform.GetComponent<TextMeshProUGUI>();
+            loginFeedbackText.text = "";
             inputUsername = inputUsernameTransform.GetComponent<TMP_InputField>();
             inputPassword = inputPasswordTransform.GetComponent<TMP_InputField>();
         }
@@ -54,17 +54,17 @@ namespace KRU.Game
 
             if (username == "") 
             {
-                webServerResponseText.text = "Please enter a username";
+                loginFeedbackText.text = "Please enter a username";
                 return;
             }
 
             if (password == "") 
             {
-                webServerResponseText.text = "Please enter a password";
+                loginFeedbackText.text = "Please enter a password";
                 return;
             }
 
-            webServerResponseText.text = "Connecting to web server...";
+            loginFeedbackText.text = "Connecting to web server...";
 
             if (!btnConnect.interactable) // Just for readability
                 return;
@@ -117,23 +117,23 @@ namespace KRU.Game
             switch ((LoginOpcode)response.opcode)
             {
                 case LoginOpcode.ACCOUNT_DOES_NOT_EXIST:
-                    webServerResponseText.text = "Account does not exist";
+                    loginFeedbackText.text = "Account does not exist";
                     btnConnect.interactable = true;
                     break;
                 case LoginOpcode.INVALID_PASSWORD:
-                    webServerResponseText.text = "Invalid password";
+                    loginFeedbackText.text = "Invalid password";
                     btnConnect.interactable = true;
                     break;
                 case LoginOpcode.INVALID_USERNAME:
-                    webServerResponseText.text = "Invalid username";
+                    loginFeedbackText.text = "Invalid username";
                     btnConnect.interactable = true;
                     break;
                 case LoginOpcode.PASSWORDS_DO_NOT_MATCH:
-                    webServerResponseText.text = "Passwords do not match";
+                    loginFeedbackText.text = "Passwords do not match";
                     btnConnect.interactable = true;
                     break;
                 case LoginOpcode.LOGIN_SUCCESS:
-                    webServerResponseText.text = "Connecting to game server...";
+                    loginFeedbackText.text = "Connecting to game server...";
                     UIMenuScript.clientScript.Connect();
                     break;
             }
@@ -157,7 +157,7 @@ namespace KRU.Game
                 case UnityWebRequest.Result.ConnectionError:
                 case UnityWebRequest.Result.DataProcessingError:
                 case UnityWebRequest.Result.ProtocolError:
-                    webServerResponseText.text = request.error;
+                    loginFeedbackText.text = request.error;
                     Debug.Log(request.error);
                     request.Dispose();
                     btnConnect.interactable = true;

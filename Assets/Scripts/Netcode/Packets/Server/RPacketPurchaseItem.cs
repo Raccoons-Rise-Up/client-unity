@@ -5,14 +5,17 @@ using Common.Networking.Packet;
 using Common.Networking.IO;
 using Common.Networking.Message;
 
-public class RPacketPurchaseItem : IReadable
+namespace KRU.Networking 
 {
-    public ServerPacketType id;
-    public uint itemId;
-
-    public void Read(PacketReader reader)
+    public class RPacketPurchaseItem : IReadable
     {
-        id = (ServerPacketType)reader.ReadByte();
-        itemId = reader.ReadUInt16();
+        public ServerPacketType id;
+        public uint itemId;
+
+        public void Read(PacketReader reader)
+        {
+            id = (ServerPacketType)reader.ReadByte();
+            itemId = reader.ReadUInt16();
+        }
     }
 }

@@ -196,9 +196,6 @@ namespace KRU.Networking
                             // Keep track of networking logic
                             tryingToConnect = false;
                             connectedToServer = true;
-
-                            // Load the main game 'scene'
-                            unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.LoadMainScene });
                             break;
 
                         case EventType.Disconnect:
@@ -226,6 +223,31 @@ namespace KRU.Networking
                             netEvent.Packet.CopyTo(readBuffer);
 
                             var opcode = (ServerPacketType)reader.ReadByte();
+
+                            if (opcode == ServerPacketType.LoginResponse) 
+                            {
+                                var data = new RPacketLogin();
+                                var packetReader = new PacketReader(readBuffer);
+                                data.Read(packetReader);
+
+                                if (data.Opcode == LoginOpcode.VERSION_MISMATCH)
+                                {
+                                    var serverVersion = $"{data.VersionMajor}.{data.VersionMinor}.{data.VersionPatch}";
+                                    var clientVersion = $"{CLIENT_VERSION_MAJOR}.{CLIENT_VERSION_MINOR}.{CLIENT_VERSION_PATCH}";
+
+                                    unityInstructions.Enqueue(new UnityInstruction
+                                    {
+                                        type = UnityInstruction.Type.ServerResponseMessage,
+                                        Message = $"Version mismatch. Server ver. {serverVersion} Client ver. {clientVersion}"
+                                    });
+                                }
+
+                                if (data.Opcode == LoginOpcode.LOGIN_SUCCESS) 
+                                {
+                                    // Load the main game 'scene'
+                                    unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.LoadMainScene });
+                                }
+                            }
 
                             if (opcode == ServerPacketType.PurchasedItem) 
                             {
@@ -262,7 +284,10 @@ namespace KRU.Networking
                 {
                     case UnityInstruction.Type.NotifyUserOfTimeout:
                         loginScript.btnConnect.interactable = true;
-                        loginScript.webServerResponseText.text = "Client connection timeout to game server";
+                        loginScript.loginFeedbackText.text = "Client connection timeout to game server";
+                        break;
+                    case UnityInstruction.Type.ServerResponseMessage:
+                        loginScript.loginFeedbackText.text = result.Message;
                         break;
                     case UnityInstruction.Type.LogMessage:
                         terminalScript.Log(result.Message);
@@ -273,7 +298,7 @@ namespace KRU.Networking
                         break;
                     case UnityInstruction.Type.LoadMainScene:
                         menuScript.FromConnectingToMainScene();
-                        loginScript.webServerResponseText.text = "";
+                        loginScript.loginFeedbackText.text = "";
                         loginScript.btnConnect.interactable = true;
                         menuScript.gameScript.inGame = true;
                         break;
@@ -304,6 +329,7 @@ namespace KRU.Networking
             LoadSceneForDisconnectTimeout,
             LoadMainScene,
             LogMessage,
+            ServerResponseMessage,
             NotifyUserOfTimeout
         }
 
