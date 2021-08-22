@@ -1,7 +1,7 @@
-# client
+# Kittens Rise Up Game Client
 
-## desc
-More will be added here in time!
+## About
+A game with a heavy focus on resource management and long term progression.
 
 ## Contributing
 Please see [Contributing.md](https://github.com/Kittens-Rise-Up/client/blob/main/CONTRIBUTING.md)
