@@ -1,5 +1,5 @@
 # Contributing
-Hello and welcome to the constributing section for the Kittens Rise Up game client! If anything comes across as confusing or is unclear please tell me about it in the [Kittens Rise Up Discord](https://discord.gg/cDNf8ja) or create a issue in this repository and I will have a look at it.
+Hello and welcome to the constributing section for the Kittens Rise Up game client! The codebase is constantly changing, if anything comes across as confusing or is unclear please tell me about it in the [Kittens Rise Up Discord](https://discord.gg/cDNf8ja) or create a issue in this repository and I will have a look at it.
 
 ## Table of Contents
 1. [Setup Project](#setup-project)
@@ -154,13 +154,10 @@ Replace `ItemID` with one or more fields, remember to write them all with `write
 #### Adding the Opcode
 Opcodes are what make packets unique from each other. For example, `ClientPacketType.Login` is a opcode used to identify that this packet holds login information.
 
-The client and server both use a common DLL which contains netcode shared by both the client and server. This is where the opcodes are defined as both the client and server need to know about this. 
+On the client, navigate to `Assets/Scripts/Netcode/Packets/Opcodes.cs` and add your opcode to the enum `ClientPacketType`.  
+On the server, navigate to `src/Server/Packets/Opcodes.cs` and add your opcode to the enum `ClientPacketType`.  
 
-Clone `https://github.com/Kittens-Rise-Up/common`
-
-Go to `src/Networking/Packet/ClientPacketType.cs` and add your opcode to the enum. 
-
-Build the common library through visual studio. A DLL file should have been generated in `obj/Debug/netstandard2.0` called `Common.dll`. Copy and paste the DLL in the client in `Assets/Scripts/Plugins/x86_64` and in the server in `libs/`.
+The `Opcodes.cs` client-side should look exactly like that of the `Opcodes.cs` server-side.
 
 #### Sending the Packet
 Navigate to `Assets/Scripts/Netcode/ENetClient.cs`, this is the main networking script for the client.
@@ -168,7 +165,7 @@ Navigate to `Assets/Scripts/Netcode/ENetClient.cs`, this is the main networking 
 First, create the packet
 ```cs
 var data = new WPacketSendSomething((ushort)itemId);
-var clientPacket = new ClientPacket(ClientPacketType.PurchaseItem, data);
+var clientPacket = new ClientPacket((byte)ClientPacketType.PurchaseItem, data);
 ```
 
 Add the packet to the outgoing concurrent queue
@@ -180,7 +177,7 @@ Finally, dequeue the packet from the outgoing concurrent queue and send it to th
 ```cs
 while (outgoing.TryDequeue(out ClientPacket clientPacket)) 
 {
-    switch (clientPacket.Opcode) 
+    switch ((ClientPacketType)clientPacket.Opcode) 
     {
         case ClientPacketType.PurchaseItem:
             Debug.Log("Sending something to game server..");
@@ -253,7 +250,7 @@ private static void ClientPacketHandleSendSomething(RPacketSendSomething data, P
         Opcode = SendSomethingOpcode.INVALID_ITEM
     };
 
-    var serverPacket = new ServerPacket(ServerPacketType.SendSomethingResponse, packetData);
+    var serverPacket = new ServerPacket((byte)ServerPacketType.SendSomethingResponse, packetData);
     Send(serverPacket, peer, PacketFlags.Reliable);
 }
 ```
