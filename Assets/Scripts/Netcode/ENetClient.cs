@@ -145,7 +145,7 @@ namespace KRU.Networking
                 // Sending data
                 while (outgoing.TryDequeue(out ClientPacket clientPacket)) 
                 {
-                    switch (clientPacket.Opcode) 
+                    switch ((ClientPacketType)clientPacket.Opcode) 
                     {
                         case ClientPacketType.Login:
                             Debug.Log("Sending login request to game server..");
@@ -184,7 +184,7 @@ namespace KRU.Networking
                             Debug.Log("Client connected to game server");
 
                             // Send login request
-                            var clientPacket = new ClientPacket(ClientPacketType.Login, new WPacketLogin { 
+                            var clientPacket = new ClientPacket((byte)ClientPacketType.Login, new WPacketLogin { 
                                 username = loginScript.username,
                                 versionMajor = CLIENT_VERSION_MAJOR,
                                 versionMinor = CLIENT_VERSION_MINOR,
@@ -199,6 +199,7 @@ namespace KRU.Networking
                             break;
 
                         case EventType.Disconnect:
+                            Debug.Log(netEvent.Data);
                             Debug.Log("Client disconnected from server");
                             connectedToServer = false;
                             break;
@@ -309,7 +310,7 @@ namespace KRU.Networking
         public void PurchaseItem(int itemId) 
         {
             var data = new WPacketPurchaseItem((ushort)itemId);
-            var clientPacket = new ClientPacket(ClientPacketType.PurchaseItem, data);
+            var clientPacket = new ClientPacket((byte)ClientPacketType.PurchaseItem, data);
 
             outgoing.Enqueue(clientPacket);
         }

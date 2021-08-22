@@ -29,10 +29,4 @@ namespace KRU.Networking
             }
         }
     }
-
-    public enum LoginOpcode
-    {
-        LOGIN_SUCCESS,
-        VERSION_MISMATCH
-    }
 }

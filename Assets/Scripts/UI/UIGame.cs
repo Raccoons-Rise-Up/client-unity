@@ -5,7 +5,7 @@ using UnityEngine;
 public class UIGame : MonoBehaviour
 {
     public GameObject panelMiddle;
-    private SectionMiddle sectionMiddle;
+    //private SectionMiddle sectionMiddle;
 
     private enum SectionMiddle
     {
@@ -16,7 +16,7 @@ public class UIGame : MonoBehaviour
 
     private void Start()
     {
-        sectionMiddle = SectionMiddle.None;
+        //sectionMiddle = SectionMiddle.None;
         panelMiddle.SetActive(false);
     }
 
