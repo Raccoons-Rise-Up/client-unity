@@ -1,4 +1,9 @@
 # Contributing
+## Table of Contents
+1. [Formatting Guidelines](#formatting-guidelines)
+2. [Creating a Pull Request](#creating-a-pull-request)
+3. [Networking](#networking)
+    - [Sending a packet from the client to the server](#sending-a-packet-from-the-client-to-the-server)
 
 ## Formatting Guidelines
 - Methods should follow PascalFormat
@@ -9,6 +14,91 @@
 ## Creating a Pull Request
 1. Always test the application to see if it works as intended with no additional bugs you may be adding!
 2. State all the changes you made in the PR, not everyone will understand what you've done!
+
+## Threads
+The networking library called ENet-CSharp should be executed on a separate thread from the Unity thread otherwise Unity will interfere with ENet. If you are unfamiliar with threads please read [Using threads and threading](https://docs.microsoft.com/en-us/dotnet/standard/threading/using-threads-and-threading).
+
+### Communicating from Unity Thread to ENet Thread
+First add a opcode to the following enum. For example maybe you want to instruct ENet to disconnect from the server entirely, so you would add something like `CancelConnection`.
+```cs
+public enum ENetInstruction 
+{
+    CancelConnection
+}
+```
+
+Enqueue the instruction from the Unity thread
+```cs
+ENetInstructions.Enqueue(ENetInstruction.CancelConnection);
+```
+
+Then dequeue the instruction in the ENet thread
+```cs
+// ENet Instructions (from Unity Thread)
+while (ENetInstructions.TryDequeue(out ENetInstruction result))
+{
+    if (result == ENetInstruction.CancelConnection)
+    {
+        Debug.Log("Cancel connection");
+        connectedToServer = false;
+        tryingToConnect = false;
+        runningNetCode = false;
+        break;
+    }
+}
+```
+
+If you wanted to send data along with the opcode then the `ENetInstruction` would have to become a class with a opcode enum inside however the need for such a purpose has not risen yet.
+
+### Communicating from ENet Thread to Unity Thread
+Lets say you want to display a message in the Unity UI when something happens in the ENet thread. Since functions like `Debug.Log(...)` and `gameObject.GetComponent<Text>().text = ...` are Unity related they must be executed on the Unity thread otherwise you will run into a runtime error.
+
+First add the opcode `LogMessage` to the `UnityInstruction.Type`
+```cs
+public class UnityInstruction 
+{
+    public enum Type 
+    {
+        LoadSceneForDisconnectTimeout,
+        LoadMainScene,
+        LogMessage,
+        NotifyUserOfTimeout
+    }
+
+    public Type type;
+    public string Message;
+}
+```
+
+Enqueue the data in the ENet thread
+```cs
+// received a purchased item packet from the server
+if (opcode == ServerPacketType.PurchasedItem) 
+{
+    var data = new PacketPurchasedItem();
+    var packetReader = new PacketReader(readBuffer);
+    data.Read(packetReader);
+
+    // enqueue data
+    unityInstructions.Enqueue(new UnityInstruction { 
+        type = UnityInstruction.Type.LogMessage,
+        Message = $"You purchased item: {data.itemId} for x gold." 
+    });
+}
+```
+
+Dequeue the data in the Unity thread
+```cs
+while (unityInstructions.TryDequeue(out UnityInstruction result)) 
+{
+    switch (result.type) 
+    {
+        case UnityInstruction.Type.LogMessage:
+            Debug.Log(result.Message);
+            break;
+    }
+}
+```
 
 ## Networking
 ### Sending a Packet from the Client to the Server
