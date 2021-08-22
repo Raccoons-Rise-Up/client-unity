@@ -1,5 +1,5 @@
 # Contributing
-Hello and welcome to the constributing section for the Kittens Rise Up game client! If anything comes across as confusing or is unclear please tell me about it in the [Kittens Rise Up Discord](https://discord.gg/cDNf8ja) or create a issue in this repository and I will have a look at it.
+Hello and welcome to the constributing section for the Kittens Rise Up game client! The codebase is constantly changing, if anything comes across as confusing or is unclear please tell me about it in the [Kittens Rise Up Discord](https://discord.gg/cDNf8ja) or create a issue in this repository and I will have a look at it.
 
 ## Table of Contents
 1. [Setup Project](#setup-project)
