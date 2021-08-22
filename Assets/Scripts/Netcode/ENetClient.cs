@@ -257,7 +257,7 @@ namespace KRU.Networking
 
                                 unityInstructions.Enqueue(new UnityInstruction { 
                                     type = UnityInstruction.Type.LogMessage,
-                                    Message = $"You purchased item: {data.itemId} for x gold." 
+                                    Message = $"You purchased item: {data.ItemId} for x gold." 
                                 });
                             }
 
