@@ -1,4 +1,6 @@
 # Contributing
+Hello and welcome to the constributing section for the Kittens Rise Up game client! If anything comes across as confusing or is unclear please tell me about it in the [Kittens Rise Up Discord](https://discord.gg/cDNf8ja) or create a issue in this repository and I will have a look at it.
+
 ## Table of Contents
 1. [Formatting Guidelines](#formatting-guidelines)
 2. [Creating a Pull Request](#creating-a-pull-request)
@@ -107,6 +109,12 @@ while (unityInstructions.TryDequeue(out UnityInstruction result))
 
 ## Networking
 ### Sending a Packet from the Client to the Server
+
+1. [Creating the Writer Packet](#creating-the-writer-packet)
+2. [Adding the Opcode](#adding-the-opcode)
+3. [Sending the Packet](#sending-the-packet)
+4. [Creating the Reader Packet Server Side](#creating-the-reader-packet-server-side)
+
 #### Creating the Writer Packet
 Create a new packet class under `Assets/Scripts/Netcode/Packets/Client`, the packet class should be called something like `PacketPositionData` or `PacketDisconnect`. (currently there is no easy way to distinguish a reader packet from a writer packet other then its well defined name and the folder group its in, this may change in the future by adding the prefix "Writer" / "Reader")
 
