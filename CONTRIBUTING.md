@@ -2,8 +2,12 @@
 ## Table of Contents
 1. [Formatting Guidelines](#formatting-guidelines)
 2. [Creating a Pull Request](#creating-a-pull-request)
-3. [Networking](#networking)
-    - [Sending a packet from the client to the server](#sending-a-packet-from-the-client-to-the-server)
+3. [Threads](#threads)
+    - [Communicating from Unity Thread to ENet Thread](#communicating-from-unity-thread-to-enet-thread)
+    - [Communicating from ENet Thread to Unity Thread](#communicating-from-enet-thread-to-unity-thread)
+4. [Networking](#networking)
+    - [Sending a Packet from the Client to the Server](#sending-a-packet-from-the-client-to-the-server)
+    - [Sending a Packet from the Server to the Client](#sending-a-packet-from-the-server-to-the-client)
 
 ## Formatting Guidelines
 - Methods should follow PascalFormat
@@ -222,3 +226,6 @@ if (opcode == ClientPacketType.SendSomething)
 ```
 
 Now all the variables written to data can be seen in `data.(...)`! (e.g. `data.itemId`)
+
+### Sending a Packet From the Server to the Client
+Sending a packet from the server to the client is much like sending a packet from the client to the server, except instead of creating the packets under `Client/<...>`, create them under `Server/<...>`.
