@@ -2,14 +2,20 @@
 Hello and welcome to the constributing section for the Kittens Rise Up game client! If anything comes across as confusing or is unclear please tell me about it in the [Kittens Rise Up Discord](https://discord.gg/cDNf8ja) or create a issue in this repository and I will have a look at it.
 
 ## Table of Contents
-1. [Formatting Guidelines](#formatting-guidelines)
-2. [Creating a Pull Request](#creating-a-pull-request)
-3. [Threads](#threads)
+1. [Setup Project](#setup-project)
+2. [Formatting Guidelines](#formatting-guidelines)
+3. [Creating a Pull Request](#creating-a-pull-request)
+4. [Threads](#threads)
     - [Communicating from Unity Thread to ENet Thread](#communicating-from-unity-thread-to-enet-thread)
     - [Communicating from ENet Thread to Unity Thread](#communicating-from-enet-thread-to-unity-thread)
-4. [Networking](#networking)
+5. [Networking](#networking)
     - [Sending a Packet from the Client to the Server](#sending-a-packet-from-the-client-to-the-server)
     - [Sending a Packet from the Server to the Client](#sending-a-packet-from-the-server-to-the-client)
+
+## Setup Project
+Download [Unity Hub](https://unity.com/download)
+
+Project is currently using `2021.1.7f1`, later versions should work just fine.
 
 ## Formatting Guidelines
 - Methods should follow PascalFormat
