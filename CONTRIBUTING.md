@@ -154,8 +154,8 @@ Replace `ItemID` with one or more fields, remember to write them all with `write
 #### Adding the Opcode
 Opcodes are what make packets unique from each other. For example, `ClientPacketType.Login` is a opcode used to identify that this packet holds login information.
 
-On the client, navigate to `Assets/Scripts/Netcode/Packets/Opcodes.cs` and add your opcode to the enum `ClientPacketType`.
-On the server, navigate to `src/Server/Packets/Opcodes.cs` and add your opcode to the enum `ClientPacketType`.
+On the client, navigate to `Assets/Scripts/Netcode/Packets/Opcodes.cs` and add your opcode to the enum `ClientPacketType`.  
+On the server, navigate to `src/Server/Packets/Opcodes.cs` and add your opcode to the enum `ClientPacketType`.  
 
 The `Opcodes.cs` client-side should look exactly like that of the `Opcodes.cs` server-side.
 
