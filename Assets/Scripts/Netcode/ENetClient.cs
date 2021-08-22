@@ -50,6 +50,11 @@ namespace KRU.Networking
         public Transform terminalTransform;
         private UITerminal terminalScript;
 
+        // Non-Inspector
+        public const int CLIENT_VERSION_MAJOR = 0;
+        public const int CLIENT_VERSION_MINOR = 1;
+        public const int CLIENT_VERSION_PATCH = 0;
+
         private readonly ConcurrentQueue<UnityInstruction> unityInstructions = new ConcurrentQueue<UnityInstruction>(); // Need a way to communicate with the Unity thread from the ENet thread
         private readonly ConcurrentQueue<ENetInstruction> ENetInstructions = new ConcurrentQueue<ENetInstruction>(); // Need a way to communicate with the ENet thread from the Unity thread
         private readonly ConcurrentQueue<ClientPacket> outgoing = new ConcurrentQueue<ClientPacket>(); // The packets that are sent to the server
@@ -179,7 +184,12 @@ namespace KRU.Networking
                             Debug.Log("Client connected to game server");
 
                             // Send login request
-                            var clientPacket = new ClientPacket(ClientPacketType.Login, new PacketLogin(loginScript.username));
+                            var clientPacket = new ClientPacket(ClientPacketType.Login, new PacketLogin { 
+                                username = loginScript.username,
+                                versionMajor = CLIENT_VERSION_MAJOR,
+                                versionMinor = CLIENT_VERSION_MINOR,
+                                versionPatch = CLIENT_VERSION_PATCH
+                            });
 
                             outgoing.Enqueue(clientPacket);
 
