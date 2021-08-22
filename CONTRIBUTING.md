@@ -23,7 +23,7 @@
 The networking library called ENet-CSharp should be executed on a separate thread from the Unity thread otherwise Unity will interfere with ENet. If you are unfamiliar with threads please read [Using threads and threading](https://docs.microsoft.com/en-us/dotnet/standard/threading/using-threads-and-threading).
 
 ### Communicating from Unity Thread to ENet Thread
-First add a opcode to the following enum. For example maybe you want to instruct ENet to disconnect from the server entirely, so you would add something like `CancelConnection`.
+In `Assets/Scripts/Netcode/ENetClient.cs`, add the 'opcode' to the following enum. For example maybe you want to instruct ENet to disconnect from the server entirely, so you would add something like `CancelConnection`.
 ```cs
 public enum ENetInstruction 
 {
