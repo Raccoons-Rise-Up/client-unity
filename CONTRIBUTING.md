@@ -238,11 +238,25 @@ if (opcode == ClientPacketType.SendSomething)
     var packetReader = new PacketReader(readBuffer);
     data.Read(packetReader);
     
-    ClientPacketHandleSendSomething(data); // create a private static method for readability and organization
+    ClientPacketHandleSendSomething(data, peer); // create a private static method for readability and organization
+}
+
+//...
+
+private static void ClientPacketHandleSendSomething(RPacketSendSomething data, Peer peer) 
+{
+    Logger.Log($"Item ID: {data.itemId}");
+    
+    // Optional: Send a response to the client for feedback
+    // You will have to create WPacketSendSomething class
+    var packetData = new WPacketSendSomething {
+        Opcode = SendSomethingOpcode.INVALID_ITEM
+    };
+
+    var serverPacket = new ServerPacket(ServerPacketType.SendSomethingResponse, packetData);
+    Send(serverPacket, peer, PacketFlags.Reliable);
 }
 ```
-
-Now all the variables written to data can be seen in `data.(...)`! (e.g. `data.itemId`)
 
 ### Sending a Packet From the Server to the Client
 Sending a packet from the server to the client is much like sending a packet from the client to the server, except instead of creating the packets under `Client/<...>`, create them under `Server/<...>`.
