@@ -139,8 +139,6 @@ namespace KRU.Networking
         public void Write(PacketWriter writer)
         {
             writer.Write(ItemID);
-            
-            writer.Dispose();
         }
     }
 }
@@ -217,8 +215,6 @@ namespace GameServer.Server.Packets
         public void Read(PacketReader reader)
         {
             itemId = reader.ReadUInt16(); // we sent it as a ushort so we must read it as a ushort (see to the table above)
-            
-            reader.Dispose();
         }
     }
 }
