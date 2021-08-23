@@ -147,15 +147,15 @@ namespace KRU.Networking
                 // Sending data
                 while (outgoing.TryDequeue(out ClientPacket clientPacket)) 
                 {
-                    switch ((ClientPacketType)clientPacket.Opcode) 
+                    switch ((ClientPacketOpcode)clientPacket.Opcode) 
                     {
-                        case ClientPacketType.Login:
+                        case ClientPacketOpcode.Login:
                             Debug.Log("Sending login request to game server..");
 
                             Send(clientPacket, PacketFlags.Reliable);
 
                             break;
-                        case ClientPacketType.PurchaseItem:
+                        case ClientPacketOpcode.PurchaseItem:
                             Debug.Log("Sending purchase item request to game server..");
 
                             Send(clientPacket, PacketFlags.Reliable);
@@ -186,7 +186,7 @@ namespace KRU.Networking
                             Debug.Log("Client connected to game server");
 
                             // Send login request
-                            var clientPacket = new ClientPacket((byte)ClientPacketType.Login, new WPacketLogin { 
+                            var clientPacket = new ClientPacket((byte)ClientPacketOpcode.Login, new WPacketLogin { 
                                 Username = loginScript.username,
                                 VersionMajor = CLIENT_VERSION_MAJOR,
                                 VersionMinor = CLIENT_VERSION_MINOR,
@@ -224,9 +224,9 @@ namespace KRU.Networking
 
                             netEvent.Packet.CopyTo(readBuffer);
 
-                            var opcode = (ServerPacketType)packetReader.ReadByte();
+                            var opcode = (ServerPacketOpcode)packetReader.ReadByte();
 
-                            if (opcode == ServerPacketType.LoginResponse) 
+                            if (opcode == ServerPacketOpcode.LoginResponse) 
                             {
                                 var data = new RPacketLogin();
                                 data.Read(packetReader);
@@ -250,7 +250,7 @@ namespace KRU.Networking
                                 }
                             }
 
-                            if (opcode == ServerPacketType.PurchasedItem) 
+                            if (opcode == ServerPacketOpcode.PurchasedItem) 
                             {
                                 var data = new RPacketPurchaseItem();
                                 data.Read(packetReader);
@@ -309,7 +309,7 @@ namespace KRU.Networking
         public void PurchaseItem(int itemId) 
         {
             var data = new WPacketPurchaseItem { ItemID = (ushort)itemId };
-            var clientPacket = new ClientPacket((byte)ClientPacketType.PurchaseItem, data);
+            var clientPacket = new ClientPacket((byte)ClientPacketOpcode.PurchaseItem, data);
 
             outgoing.Enqueue(clientPacket);
         }

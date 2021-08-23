@@ -1,6 +1,6 @@
 ﻿namespace KRU.Networking
 {
-    public enum ClientPacketType
+    public enum ClientPacketOpcode
     {
         Disconnect,
         PurchaseItem,
@@ -8,7 +8,7 @@
         Login
     }
 
-    public enum ServerPacketType
+    public enum ServerPacketOpcode
     {
         ClientDisconnected,
         PurchasedItem,
