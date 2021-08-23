@@ -39,6 +39,10 @@ namespace KRU.Game
 
         private void Start()
         {
+            // There's no settings class right now so I'll just put this stuff here
+            QualitySettings.vSyncCount = 1; // Sync framerate to monitor refresh rate
+            Application.targetFrameRate = 60; // FPS if VSync is turned off
+
             UIMenuScript = menuTransform.GetComponent<UIMenu>();
             btnConnect = btnConnectTransform.GetComponent<Button>();
             loginFeedbackText = webServerResponseTextTransform.GetComponent<TextMeshProUGUI>();

@@ -25,7 +25,7 @@ namespace KRU.Game
         [HideInInspector] public Button btnLogin;
 
         public Transform gameTransform;
-        [HideInInspector] public Game gameScript;
+        [HideInInspector] public KRUGame gameScript;
 
         private enum MenuSection { 
             MainMenu,
@@ -43,7 +43,7 @@ namespace KRU.Game
             clientScript = clientTransform.GetComponent<ENetClient>();
 
             btnLogin = btnLoginTransform.GetComponent<Button>();
-            gameScript = gameTransform.GetComponent<Game>();
+            gameScript = gameTransform.GetComponent<KRUGame>();
 
             // Just to make sure in case someone forgot to disable / enable the appropriate ones in the editor while working
             menuSection = MenuSection.MainMenu;
@@ -60,7 +60,7 @@ namespace KRU.Game
         {
             if (Input.GetKeyDown(KeyCode.Escape)) 
             {
-                if (gameScript.inGame) 
+                if (gameScript.Player.InGame) 
                 {
                     if (menuSection == MenuSection.GameMenu)
                     {
@@ -94,7 +94,7 @@ namespace KRU.Game
                     
                     sectionOptions.SetActive(false);
 
-                    if (gameScript.inGame)
+                    if (gameScript.Player.InGame)
                     {
                         menuSection = MenuSection.GameMenu;
                         sectionGameMenu.SetActive(true);
@@ -119,6 +119,8 @@ namespace KRU.Game
         public void LoadTimeoutDisconnectScene() 
         {
             menuSection = MenuSection.Login;
+            StopCoroutine(gameScript.GameLoop);
+            gameCanvas.SetActive(false);
             menuCanvas.SetActive(true);
             sectionLogin.SetActive(true);
             btnLogin.interactable = true;
@@ -146,7 +148,7 @@ namespace KRU.Game
             sectionGameMenu.SetActive(false);
             menuSection = MenuSection.MainMenu;
             sectionMainMenu.SetActive(true);
-            gameScript.inGame = false;
+            gameScript.Player.InGame = false;
             btnLogin.interactable = true;
             clientScript.Disconnect();
         }
@@ -155,7 +157,7 @@ namespace KRU.Game
         {
             menuSection = MenuSection.Options;
 
-            if (gameScript.inGame) 
+            if (gameScript.Player.InGame) 
             {
                 sectionGameMenu.SetActive(false);
             }

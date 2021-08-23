@@ -50,6 +50,10 @@ namespace KRU.Networking
         public Transform terminalTransform;
         private UITerminal terminalScript;
 
+        public Transform gameTransform;
+        private KRUGame gameScript;
+        private Player player;
+
         // Non-Inspector
         public const int CLIENT_VERSION_MAJOR = 0;
         public const int CLIENT_VERSION_MINOR = 1;
@@ -87,6 +91,8 @@ namespace KRU.Networking
             menuScript = menuTranform.GetComponent<UIMenu>();
             loginScript = loginTransform.GetComponent<UILogin>();
             terminalScript = terminalTransform.GetComponent<UITerminal>();
+            gameScript = gameTransform.GetComponent<KRUGame>();
+            player = gameScript.Player;
 
             // Make sure queues are completely drained before starting
             if (outgoing != null) while (outgoing.TryDequeue(out _)) ;
@@ -243,10 +249,18 @@ namespace KRU.Networking
                                     });
                                 }
 
-                                if (data.LoginOpcode == LoginResponseOpcode.LoginSuccess) 
+                                if (data.LoginOpcode == LoginResponseOpcode.LoginSuccess)
                                 {
                                     // Load the main game 'scene'
                                     unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.LoadMainScene });
+
+                                    // Update the player gold
+                                    unityInstructions.Enqueue(new UnityInstruction { 
+                                        type = UnityInstruction.Type.UpdateGoldText ,
+                                        Message = data.Gold.ToString()
+                                    });
+
+                                    unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.LoginSuccess });
                                 }
                             }
 
@@ -263,6 +277,13 @@ namespace KRU.Networking
                                             type = UnityInstruction.Type.LogMessage,
                                             Message = $"You do not have enough gold for {(ItemType)data.ItemId}."
                                         });
+
+                                        // Update the player gold
+                                        unityInstructions.Enqueue(new UnityInstruction
+                                        {
+                                            type = UnityInstruction.Type.UpdateGoldText,
+                                            Message = data.Gold.ToString()
+                                        });
                                         break;
                                     case PurchaseItemResponseOpcode.Purchased:
                                         // TODO: Update player gold from server
@@ -270,7 +291,14 @@ namespace KRU.Networking
                                         unityInstructions.Enqueue(new UnityInstruction
                                         {
                                             type = UnityInstruction.Type.LogMessage,
-                                            Message = $"You purchased item: {data.ItemId} for 25 gold."
+                                            Message = $"Bought {(ItemType)data.ItemId} for 25 gold."
+                                        });
+
+                                        // Update the player gold
+                                        unityInstructions.Enqueue(new UnityInstruction
+                                        {
+                                            type = UnityInstruction.Type.UpdateGoldText,
+                                            Message = data.Gold.ToString()
                                         });
                                         break;
                                 }
@@ -310,13 +338,19 @@ namespace KRU.Networking
                         break;
                     case UnityInstruction.Type.LoadSceneForDisconnectTimeout:
                         menuScript.LoadTimeoutDisconnectScene();
-                        menuScript.gameScript.inGame = false;
+                        menuScript.gameScript.Player.InGame = false;
                         break;
                     case UnityInstruction.Type.LoadMainScene:
                         menuScript.FromConnectingToMainScene();
                         loginScript.loginFeedbackText.text = "";
                         loginScript.btnConnect.interactable = true;
-                        menuScript.gameScript.inGame = true;
+                        menuScript.gameScript.Player.InGame = true;
+                        break;
+                    case UnityInstruction.Type.UpdateGoldText:
+                        player.Gold = uint.Parse(result.Message);
+                        break;
+                    case UnityInstruction.Type.LoginSuccess:
+                        StartCoroutine(gameScript.GameLoop);
                         break;
                 }
             }
@@ -346,7 +380,9 @@ namespace KRU.Networking
             LoadMainScene,
             LogMessage,
             ServerResponseMessage,
-            NotifyUserOfTimeout
+            NotifyUserOfTimeout,
+            UpdateGoldText,
+            LoginSuccess
         }
 
         public Type type;

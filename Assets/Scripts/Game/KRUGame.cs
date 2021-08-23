@@ -20,28 +20,31 @@
  */
 
 using UnityEngine;
+using System.Collections;
 
 namespace KRU.Game 
 {
-    public class Game : MonoBehaviour
+    public class KRUGame : MonoBehaviour
     {
-        public bool inGame;
+        public Player Player { get; set; }
 
-        public int gold = 1000;
+        public IEnumerator GameLoop { get; private set; }
 
         private void Start()
         {
-            QualitySettings.vSyncCount = 1; // Sync framerate to monitor refresh rate
-            Application.targetFrameRate = 60; // FPS if VSync is turned off
+            Player = new Player();
+            GameLoop = GameUpdate();
         }
 
-        private void FixedUpdate()
+        private IEnumerator GameUpdate() 
         {
-            RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-
-            if (hit.collider != null)
+            while (true) 
             {
-                Debug.Log("Target Position: " + hit.collider.gameObject.transform.position);
+                Player.Gold += 1;
+
+                UIGame.UpdateGoldText();
+
+                yield return new WaitForSeconds(1);
             }
         }
     }
