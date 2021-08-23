@@ -231,7 +231,7 @@ namespace KRU.Networking
                                 var data = new RPacketLogin();
                                 data.Read(packetReader);
 
-                                if (data.LoginOpcode == LoginOpcode.VersionMismatch)
+                                if (data.LoginOpcode == LoginResponseOpcode.VersionMismatch)
                                 {
                                     var serverVersion = $"{data.VersionMajor}.{data.VersionMinor}.{data.VersionPatch}";
                                     var clientVersion = $"{CLIENT_VERSION_MAJOR}.{CLIENT_VERSION_MINOR}.{CLIENT_VERSION_PATCH}";
@@ -243,7 +243,7 @@ namespace KRU.Networking
                                     });
                                 }
 
-                                if (data.LoginOpcode == LoginOpcode.LoginSuccess) 
+                                if (data.LoginOpcode == LoginResponseOpcode.LoginSuccess) 
                                 {
                                     // Load the main game 'scene'
                                     unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.LoadMainScene });
@@ -255,12 +255,28 @@ namespace KRU.Networking
                                 var data = new RPacketPurchaseItem();
                                 data.Read(packetReader);
 
-                                unityInstructions.Enqueue(new UnityInstruction { 
-                                    type = UnityInstruction.Type.LogMessage,
-                                    Message = $"You purchased item: {data.ItemId} for x gold." 
-                                });
+                                switch (data.PurchaseItemResponseOpcode) 
+                                {
+                                    case PurchaseItemResponseOpcode.NotEnoughGold:
+                                        unityInstructions.Enqueue(new UnityInstruction
+                                        {
+                                            type = UnityInstruction.Type.LogMessage,
+                                            Message = $"You do not have enough gold for {(ItemType)data.ItemId}."
+                                        });
+                                        break;
+                                    case PurchaseItemResponseOpcode.Purchased:
+                                        // TODO: Update player gold from server
+
+                                        unityInstructions.Enqueue(new UnityInstruction
+                                        {
+                                            type = UnityInstruction.Type.LogMessage,
+                                            Message = $"You purchased item: {data.ItemId} for 25 gold."
+                                        });
+                                        break;
+                                }
                             }
 
+                            packetReader.Dispose();
                             packet.Dispose();
                             break;
                     }

@@ -6,27 +6,25 @@ namespace KRU.Networking
 {
     public class RPacketLogin : IReadable
     {
-        public LoginOpcode LoginOpcode { get; set; }
+        public LoginResponseOpcode LoginOpcode { get; set; }
         public byte VersionMajor { get; set; }
         public byte VersionMinor { get; set; }
         public byte VersionPatch { get; set; }
 
         public void Read(PacketReader reader)
         {
-            LoginOpcode = (LoginOpcode)reader.ReadByte();
+            LoginOpcode = (LoginResponseOpcode)reader.ReadByte();
 
             switch (LoginOpcode) 
             {
-                case LoginOpcode.VersionMismatch:
+                case LoginResponseOpcode.VersionMismatch:
                     VersionMajor = reader.ReadByte();
                     VersionMinor = reader.ReadByte();
                     VersionPatch = reader.ReadByte();
                     break;
-                case LoginOpcode.LoginSuccess:
+                case LoginResponseOpcode.LoginSuccess:
                     break;
             }
-
-            reader.Dispose();
         }
     }
 }
