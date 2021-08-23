@@ -17,12 +17,12 @@ namespace KRU.Networking
 
             switch (LoginOpcode) 
             {
-                case LoginOpcode.VERSION_MISMATCH:
+                case LoginOpcode.VersionMismatch:
                     VersionMajor = reader.ReadByte();
                     VersionMinor = reader.ReadByte();
                     VersionPatch = reader.ReadByte();
                     break;
-                case LoginOpcode.LOGIN_SUCCESS:
+                case LoginOpcode.LoginSuccess:
                     break;
             }
 

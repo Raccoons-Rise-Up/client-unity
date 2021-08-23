@@ -149,13 +149,13 @@ namespace KRU.Networking
                 {
                     switch ((ClientPacketOpcode)clientPacket.Opcode) 
                     {
-                        case ClientPacketOpcode.LOGIN:
+                        case ClientPacketOpcode.Login:
                             Debug.Log("Sending login request to game server..");
 
                             Send(clientPacket, PacketFlags.Reliable);
 
                             break;
-                        case ClientPacketOpcode.PURCHASE_ITEM:
+                        case ClientPacketOpcode.PurchaseItem:
                             Debug.Log("Sending purchase item request to game server..");
 
                             Send(clientPacket, PacketFlags.Reliable);
@@ -186,7 +186,7 @@ namespace KRU.Networking
                             Debug.Log("Client connected to game server");
 
                             // Send login request
-                            var clientPacket = new ClientPacket((byte)ClientPacketOpcode.LOGIN, new WPacketLogin { 
+                            var clientPacket = new ClientPacket((byte)ClientPacketOpcode.Login, new WPacketLogin { 
                                 Username = loginScript.username,
                                 VersionMajor = CLIENT_VERSION_MAJOR,
                                 VersionMinor = CLIENT_VERSION_MINOR,
@@ -226,12 +226,12 @@ namespace KRU.Networking
 
                             var opcode = (ServerPacketOpcode)packetReader.ReadByte();
 
-                            if (opcode == ServerPacketOpcode.LOGIN_RESPONSE) 
+                            if (opcode == ServerPacketOpcode.LoginResponse) 
                             {
                                 var data = new RPacketLogin();
                                 data.Read(packetReader);
 
-                                if (data.LoginOpcode == LoginOpcode.VERSION_MISMATCH)
+                                if (data.LoginOpcode == LoginOpcode.VersionMismatch)
                                 {
                                     var serverVersion = $"{data.VersionMajor}.{data.VersionMinor}.{data.VersionPatch}";
                                     var clientVersion = $"{CLIENT_VERSION_MAJOR}.{CLIENT_VERSION_MINOR}.{CLIENT_VERSION_PATCH}";
@@ -243,14 +243,14 @@ namespace KRU.Networking
                                     });
                                 }
 
-                                if (data.LoginOpcode == LoginOpcode.LOGIN_SUCCESS) 
+                                if (data.LoginOpcode == LoginOpcode.LoginSuccess) 
                                 {
                                     // Load the main game 'scene'
                                     unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.LoadMainScene });
                                 }
                             }
 
-                            if (opcode == ServerPacketOpcode.PURCHASED_ITEM) 
+                            if (opcode == ServerPacketOpcode.PurchasedItem) 
                             {
                                 var data = new RPacketPurchaseItem();
                                 data.Read(packetReader);
@@ -309,7 +309,7 @@ namespace KRU.Networking
         public void PurchaseItem(int itemId) 
         {
             var data = new WPacketPurchaseItem { ItemID = (ushort)itemId };
-            var clientPacket = new ClientPacket((byte)ClientPacketOpcode.PURCHASE_ITEM, data);
+            var clientPacket = new ClientPacket((byte)ClientPacketOpcode.PurchaseItem, data);
 
             outgoing.Enqueue(clientPacket);
         }
