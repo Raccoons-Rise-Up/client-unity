@@ -132,7 +132,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 135422645495370865, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Name
-      value: button_Credits
+      value: Credits
       objectReference: {fileID: 0}
     - target: {fileID: 690053855147539158, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Pivot.x
@@ -252,7 +252,7 @@ GameObject:
   - component: {fileID: 105351625}
   - component: {fileID: 105351626}
   m_Layer: 5
-  m_Name: Buttons
+  m_Name: Vertical Layout Group
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -316,7 +316,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 135422645495370865, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Name
-      value: button_Options
+      value: Options
       objectReference: {fileID: 0}
     - target: {fileID: 690053855147539158, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Pivot.x
@@ -439,7 +439,7 @@ GameObject:
   - component: {fileID: 207321960}
   - component: {fileID: 207321961}
   m_Layer: 5
-  m_Name: panel_Terminal
+  m_Name: Panel Terminal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -556,7 +556,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 135422645495370865, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Name
-      value: button_Login
+      value: Login
       objectReference: {fileID: 0}
     - target: {fileID: 690053855147539158, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Pivot.x
@@ -724,7 +724,7 @@ GameObject:
   - component: {fileID: 286886911}
   - component: {fileID: 286886910}
   m_Layer: 5
-  m_Name: text_ServerResponse
+  m_Name: Text Server Response
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -855,7 +855,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2590085893653096384, guid: de18c0754f31739448da0a1b69e78824, type: 3}
       propertyPath: m_Name
-      value: btn_Structure_Farm
+      value: Structure Farm
       objectReference: {fileID: 0}
     - target: {fileID: 2931191721247512075, guid: de18c0754f31739448da0a1b69e78824, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -1019,7 +1019,7 @@ GameObject:
   - component: {fileID: 358115464}
   - component: {fileID: 358115465}
   m_Layer: 5
-  m_Name: Buttons
+  m_Name: Vertical Layout Group
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1083,7 +1083,7 @@ GameObject:
   - component: {fileID: 396514356}
   - component: {fileID: 396514357}
   m_Layer: 5
-  m_Name: GameObject
+  m_Name: Vertical Layout Group
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1149,7 +1149,7 @@ GameObject:
   - component: {fileID: 403782617}
   - component: {fileID: 403782616}
   m_Layer: 5
-  m_Name: input_Password
+  m_Name: Input Password
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1609,7 +1609,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 135422645495370865, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Name
-      value: button_Research
+      value: Research
       objectReference: {fileID: 0}
     - target: {fileID: 690053855147539158, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Pivot.x
@@ -1949,7 +1949,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 135422645495370865, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Name
-      value: button_Disconnect
+      value: Disconnect
       objectReference: {fileID: 0}
     - target: {fileID: 690053855147539158, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Pivot.x
@@ -2100,7 +2100,7 @@ GameObject:
   - component: {fileID: 623942252}
   - component: {fileID: 623942253}
   m_Layer: 5
-  m_Name: section_Login
+  m_Name: Section Login
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2156,7 +2156,7 @@ GameObject:
   m_Component:
   - component: {fileID: 636567174}
   m_Layer: 5
-  m_Name: section_Store
+  m_Name: Section Store
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2192,7 +2192,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 135422645495370865, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Name
-      value: button_Exit
+      value: Exit
       objectReference: {fileID: 0}
     - target: {fileID: 690053855147539158, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Pivot.x
@@ -2311,7 +2311,7 @@ GameObject:
   m_Component:
   - component: {fileID: 722871867}
   m_Layer: 5
-  m_Name: section_GameMenu
+  m_Name: Section Game Menu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2348,7 +2348,7 @@ GameObject:
   - component: {fileID: 739090189}
   - component: {fileID: 739090190}
   m_Layer: 5
-  m_Name: Button Group
+  m_Name: Horizontal Layout
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2416,7 +2416,7 @@ GameObject:
   - component: {fileID: 755838832}
   - component: {fileID: 755838831}
   m_Layer: 5
-  m_Name: canvas_Menu
+  m_Name: Canvas Menu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2591,7 +2591,7 @@ GameObject:
   - component: {fileID: 863273391}
   - component: {fileID: 863273390}
   m_Layer: 5
-  m_Name: panel_Border
+  m_Name: Panel Border
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2666,7 +2666,7 @@ GameObject:
   - component: {fileID: 877195355}
   - component: {fileID: 877195354}
   m_Layer: 5
-  m_Name: panel_Navigation
+  m_Name: Panel Navigation
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2739,7 +2739,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8129298226807740308, guid: f731a7c8e08cc014fa82ed340d6ffcdb, type: 3}
       propertyPath: m_Name
-      value: tech_Label (1)
+      value: Tech Label (1)
       objectReference: {fileID: 0}
     - target: {fileID: 8692967438950086963, guid: f731a7c8e08cc014fa82ed340d6ffcdb, type: 3}
       propertyPath: m_Pivot.x
@@ -2999,7 +2999,7 @@ GameObject:
   - component: {fileID: 996159612}
   - component: {fileID: 996159611}
   m_Layer: 5
-  m_Name: section_Research
+  m_Name: Section Research
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3080,7 +3080,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1063703565}
   m_Layer: 5
-  m_Name: section_Civilization
+  m_Name: Section Civilization
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3212,7 +3212,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7151536329802394281, guid: 35bbbe05864212445a04c320970fd388, type: 3}
       propertyPath: m_Name
-      value: group_Kittens
+      value: Kittens
       objectReference: {fileID: 0}
     - target: {fileID: 7151536329802394282, guid: 35bbbe05864212445a04c320970fd388, type: 3}
       propertyPath: m_Pivot.x
@@ -3373,7 +3373,7 @@ GameObject:
   - component: {fileID: 1190434621}
   - component: {fileID: 1190434622}
   m_Layer: 5
-  m_Name: Buttons
+  m_Name: Grid Layout Group
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3437,7 +3437,7 @@ GameObject:
   - component: {fileID: 1218683981}
   - component: {fileID: 1218683980}
   m_Layer: 5
-  m_Name: input_Username
+  m_Name: Input Username
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3609,7 +3609,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1251340538}
   m_Layer: 5
-  m_Name: section_Credits
+  m_Name: Section Credits
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3696,7 +3696,7 @@ GameObject:
   - component: {fileID: 1320043560}
   - component: {fileID: 1320043559}
   m_Layer: 5
-  m_Name: text_Title
+  m_Name: Title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3827,7 +3827,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 135422645495370865, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Name
-      value: button_Kittens
+      value: Kittens
       objectReference: {fileID: 0}
     - target: {fileID: 690053855147539158, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Pivot.x
@@ -4057,7 +4057,7 @@ GameObject:
   - component: {fileID: 1555528113}
   - component: {fileID: 1555528114}
   m_Layer: 5
-  m_Name: Layout
+  m_Name: Vertical Layout Group
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4123,7 +4123,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 135422645495370865, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Name
-      value: button_Build
+      value: Build
       objectReference: {fileID: 0}
     - target: {fileID: 690053855147539158, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Pivot.x
@@ -4239,7 +4239,7 @@ GameObject:
   - component: {fileID: 1645451827}
   - component: {fileID: 1645451826}
   m_Layer: 5
-  m_Name: panel_Middle
+  m_Name: Panel Middle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4325,7 +4325,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1691150862}
   m_Layer: 5
-  m_Name: section_MainMenu
+  m_Name: Section Main Menu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4360,7 +4360,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 135422645495370865, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Name
-      value: button_Options
+      value: Options
       objectReference: {fileID: 0}
     - target: {fileID: 690053855147539158, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Pivot.x
@@ -4615,7 +4615,7 @@ GameObject:
   - component: {fileID: 1781827323}
   - component: {fileID: 1781827324}
   m_Layer: 5
-  m_Name: section_Terminal
+  m_Name: Section Terminal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4759,7 +4759,7 @@ GameObject:
   - component: {fileID: 1841700971}
   - component: {fileID: 1841700970}
   m_Layer: 5
-  m_Name: label_Password
+  m_Name: Label Password
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4893,7 +4893,7 @@ GameObject:
   - component: {fileID: 1841841473}
   - component: {fileID: 1841841472}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5079,7 +5079,7 @@ GameObject:
   - component: {fileID: 1877940817}
   - component: {fileID: 1877940816}
   m_Layer: 5
-  m_Name: label_Username
+  m_Name: Label Username
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5211,7 +5211,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1897111538}
   m_Layer: 5
-  m_Name: section_Options
+  m_Name: Section Options
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5249,7 +5249,7 @@ GameObject:
   - component: {fileID: 1917179068}
   - component: {fileID: 1917179067}
   m_Layer: 5
-  m_Name: text_Store
+  m_Name: Title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5383,7 +5383,7 @@ GameObject:
   - component: {fileID: 1941427313}
   - component: {fileID: 1941427312}
   m_Layer: 5
-  m_Name: panel_UpperLeft
+  m_Name: Panel Upper Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5457,7 +5457,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 135422645495370865, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Name
-      value: btn_Connect
+      value: Connect
       objectReference: {fileID: 0}
     - target: {fileID: 690053855147539158, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Pivot.x
@@ -5618,7 +5618,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 135422645495370865, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Name
-      value: button_Civilization
+      value: Civilization
       objectReference: {fileID: 0}
     - target: {fileID: 690053855147539158, guid: a3505d438bcfc364894181a40161bd27, type: 3}
       propertyPath: m_Pivot.x
@@ -5734,7 +5734,7 @@ GameObject:
   - component: {fileID: 2016068514}
   - component: {fileID: 2016068513}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5867,7 +5867,7 @@ GameObject:
   - component: {fileID: 2041742420}
   - component: {fileID: 2041742421}
   m_Layer: 5
-  m_Name: section_Kittens
+  m_Name: Section Kittens
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6015,7 +6015,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2590085893653096384, guid: de18c0754f31739448da0a1b69e78824, type: 3}
       propertyPath: m_Name
-      value: btn_Structure_Hut
+      value: Structure Hut
       objectReference: {fileID: 0}
     - target: {fileID: 2931191721247512075, guid: de18c0754f31739448da0a1b69e78824, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -6177,7 +6177,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8129298226807740308, guid: f731a7c8e08cc014fa82ed340d6ffcdb, type: 3}
       propertyPath: m_Name
-      value: tech_Label
+      value: Tech Label
       objectReference: {fileID: 0}
     - target: {fileID: 8692967438950086963, guid: f731a7c8e08cc014fa82ed340d6ffcdb, type: 3}
       propertyPath: m_Pivot.x
@@ -6274,7 +6274,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 7151536329802394281, guid: 35bbbe05864212445a04c320970fd388, type: 3}
       propertyPath: m_Name
-      value: group_Gold
+      value: Gold
       objectReference: {fileID: 0}
     - target: {fileID: 7151536329802394282, guid: 35bbbe05864212445a04c320970fd388, type: 3}
       propertyPath: m_Pivot.x

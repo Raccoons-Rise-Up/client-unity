@@ -281,7 +281,7 @@ GameObject:
   - component: {fileID: 7672832415003637957}
   - component: {fileID: 2931191721247512075}
   m_Layer: 5
-  m_Name: btn_Structure
+  m_Name: Button Structure
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -412,7 +412,7 @@ GameObject:
   - component: {fileID: 1463822929455403540}
   - component: {fileID: 2842966583403594172}
   m_Layer: 5
-  m_Name: Elements
+  m_Name: Vertical Layout Group
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
