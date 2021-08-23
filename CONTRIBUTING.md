@@ -229,7 +229,6 @@ Finally in `src/Server/ENetServer.cs` add the following code.
 if (opcode == ClientPacketType.SendSomething) 
 {
     var data = new RPacketSendSomething();
-    var packetReader = new PacketReader(readBuffer);
     data.Read(packetReader);
     
     ClientPacketHandleSendSomething(data, peer); // create a private static method for readability and organization
