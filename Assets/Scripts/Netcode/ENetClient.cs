@@ -62,7 +62,7 @@ namespace KRU.Networking
 
         private const int PACKET_SIZE_MAX = 1024;
 
-        private readonly ConcurrentQueue<UnityInstruction> unityInstructions = new ConcurrentQueue<UnityInstruction>(); // Need a way to communicate with the Unity thread from the ENet thread
+        private readonly ConcurrentQueue<UnityInstructions> unityInstructions = new ConcurrentQueue<UnityInstructions>(); // Need a way to communicate with the Unity thread from the ENet thread
         private readonly ConcurrentQueue<ENetInstructionOpcode> ENetInstructions = new ConcurrentQueue<ENetInstructionOpcode>(); // Need a way to communicate with the ENet thread from the Unity thread
         private readonly ConcurrentQueue<ClientPacket> outgoing = new ConcurrentQueue<ClientPacket>(); // The packets that are sent to the server
 
@@ -217,8 +217,8 @@ namespace KRU.Networking
                             Debug.Log("Client connection timeout to game server");
                             tryingToConnect = false;
                             connectedToServer = false;
-                            unityInstructions.Enqueue(new UnityInstruction(UnityInstructionOpcode.NotifyUserOfTimeout));
-                            unityInstructions.Enqueue(new UnityInstruction(UnityInstructionOpcode.LoadSceneForDisconnectTimeout));
+                            unityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.NotifyUserOfTimeout));
+                            unityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoadSceneForDisconnectTimeout));
                             break;
 
                         case EventType.Receive:
@@ -243,22 +243,23 @@ namespace KRU.Networking
                                     var serverVersion = $"{data.VersionMajor}.{data.VersionMinor}.{data.VersionPatch}";
                                     var clientVersion = $"{CLIENT_VERSION_MAJOR}.{CLIENT_VERSION_MINOR}.{CLIENT_VERSION_PATCH}";
 
-                                    var instruction = new UnityInstruction(UnityInstructionOpcode.ServerResponseMessage);
-                                    instruction.Write($"Version mismatch. Server ver. {serverVersion} Client ver. {clientVersion}");
+                                    var cmd = new UnityInstructions();
+                                    cmd.Set(UnityInstructionOpcode.ServerResponseMessage, 
+                                        $"Version mismatch. Server ver. {serverVersion} Client ver. {clientVersion}");
 
-                                    unityInstructions.Enqueue(instruction);
+                                    unityInstructions.Enqueue(cmd);
                                 }
 
                                 if (data.LoginOpcode == LoginResponseOpcode.LoginSuccess)
                                 {
                                     // Load the main game 'scene'
-                                    unityInstructions.Enqueue(new UnityInstruction(UnityInstructionOpcode.LoadMainScene));
+                                    unityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoadMainScene));
 
                                     // Update player values
                                     player.Gold = data.Gold;
                                     player.StructureHuts = data.StructureHut;
 
-                                    unityInstructions.Enqueue(new UnityInstruction (UnityInstructionOpcode.LoginSuccess));
+                                    unityInstructions.Enqueue(new UnityInstructions (UnityInstructionOpcode.LoginSuccess));
                                 }
                             }
 
@@ -271,10 +272,10 @@ namespace KRU.Networking
 
                                 if (itemResponseOpcode == PurchaseItemResponseOpcode.NotEnoughGold) 
                                 {
-                                    var instructionLogMessage = new UnityInstruction(UnityInstructionOpcode.LogMessage);
-                                    instructionLogMessage.Write($"You do not have enough gold for {(ItemType)data.ItemId}.");
+                                    var cmd = new UnityInstructions();
+                                    cmd.Set(UnityInstructionOpcode.LogMessage, $"You do not have enough gold for {(ItemType)data.ItemId}.");
 
-                                    unityInstructions.Enqueue(instructionLogMessage);
+                                    unityInstructions.Enqueue(cmd);
 
                                     // Update the player gold
                                     player.Gold = data.Gold;
@@ -282,10 +283,10 @@ namespace KRU.Networking
 
                                 if (itemResponseOpcode == PurchaseItemResponseOpcode.Purchased) 
                                 {
-                                    var instructionLogMessage = new UnityInstruction(UnityInstructionOpcode.LogMessage);
-                                    instructionLogMessage.Write($"Bought {(ItemType)data.ItemId} for 25 gold.");
+                                    var cmd = new UnityInstructions();
+                                    cmd.Set(UnityInstructionOpcode.LogMessage, $"Bought {(ItemType)data.ItemId} for 25 gold.");
 
-                                    unityInstructions.Enqueue(instructionLogMessage);
+                                    unityInstructions.Enqueue(cmd);
 
                                     // Update the player gold
                                     player.Gold = data.Gold;
@@ -320,33 +321,44 @@ namespace KRU.Networking
             if (!runningNetCode)
                 return;
 
-            while (unityInstructions.TryDequeue(out UnityInstruction result)) 
+            while (unityInstructions.TryDequeue(out UnityInstructions result)) 
             {
-                switch (result.Opcode) 
+                foreach (var cmd in result.Instructions) 
                 {
-                    case UnityInstructionOpcode.NotifyUserOfTimeout:
+                    if (cmd.Key == UnityInstructionOpcode.NotifyUserOfTimeout) 
+                    {
                         loginScript.btnConnect.interactable = true;
                         loginScript.loginFeedbackText.text = "Client connection timeout to game server";
-                        break;
-                    case UnityInstructionOpcode.ServerResponseMessage:
-                        loginScript.loginFeedbackText.text = (string)result.Data[0];
-                        break;
-                    case UnityInstructionOpcode.LogMessage:
-                        terminalScript.Log((string)result.Data[0]);
-                        break;
-                    case UnityInstructionOpcode.LoadSceneForDisconnectTimeout:
+                    }
+
+                    if (cmd.Key == UnityInstructionOpcode.ServerResponseMessage) 
+                    {
+                        loginScript.loginFeedbackText.text = (string)cmd.Value[0];
+                    }
+
+                    if (cmd.Key == UnityInstructionOpcode.LogMessage) 
+                    {
+                        terminalScript.Log((string)cmd.Value[0]);
+                    }
+
+                    if (cmd.Key == UnityInstructionOpcode.LoadSceneForDisconnectTimeout) 
+                    {
                         menuScript.LoadTimeoutDisconnectScene();
                         menuScript.gameScript.Player.InGame = false;
-                        break;
-                    case UnityInstructionOpcode.LoadMainScene:
+                    }
+
+                    if (cmd.Key == UnityInstructionOpcode.LoadMainScene) 
+                    {
                         menuScript.FromConnectingToMainScene();
                         loginScript.loginFeedbackText.text = "";
                         loginScript.btnConnect.interactable = true;
                         menuScript.gameScript.Player.InGame = true;
-                        break;
-                    case UnityInstructionOpcode.LoginSuccess:
+                    }
+
+                    if (cmd.Key == UnityInstructionOpcode.LoginSuccess) 
+                    {
                         StartCoroutine(gameScript.GameLoop);
-                        break;
+                    }
                 }
             }
         }
@@ -367,20 +379,26 @@ namespace KRU.Networking
         }
     }
 
-    public class UnityInstruction 
+    public class UnityInstructions 
     {
-        public UnityInstructionOpcode Opcode { get; set; }
-        public List<object> Data { get; set; }
+        public Dictionary<UnityInstructionOpcode, List<object>> Instructions { get; set; }
 
-        public UnityInstruction(UnityInstructionOpcode opcode) 
+        public UnityInstructions() 
         {
-            Opcode = opcode;
-            Data = new List<object>();
+            Instructions = new Dictionary<UnityInstructionOpcode, List<object>>();
         }
 
-        public void Write(object obj) 
+        public UnityInstructions(UnityInstructionOpcode opcode) 
         {
-            Data.Add(obj);
+            Instructions = new Dictionary<UnityInstructionOpcode, List<object>>
+            {
+                [opcode] = null
+            };
+        }
+
+        public void Set(UnityInstructionOpcode opcode, params object[] data) 
+        {
+            Instructions[opcode] = new List<object>(data);
         }
     }
 
