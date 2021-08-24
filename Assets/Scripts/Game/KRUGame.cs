@@ -19,8 +19,10 @@
  * https://discord.gg/cDNf8ja or email sebastianbelle074@protonmail.com
  */
 
-using UnityEngine;
+using System;
 using System.Collections;
+
+using UnityEngine;
 
 namespace KRU.Game 
 {
@@ -28,19 +30,28 @@ namespace KRU.Game
     {
         public Player Player { get; set; }
 
-        public IEnumerator GameLoop { get; private set; }
+        public IEnumerator UILoop { get; private set; }
 
         private void Start()
         {
             Player = new Player();
-            GameLoop = GameUpdate();
+            UILoop = UpdateUI();
         }
 
-        private IEnumerator GameUpdate() 
+        private IEnumerator UpdateUI() 
         {
+            var lastGoldAdded = DateTime.Now;
+
             while (true) 
             {
-                Player.Gold += 1 * Player.StructureHuts;
+                var structureHutGoldGenerated = 1;
+
+                var diff = (DateTime.Now - lastGoldAdded).TotalSeconds;
+
+                Player.Gold += (float)(structureHutGoldGenerated * Player.StructureHuts * diff);
+                Debug.Log(Player.Gold);
+
+                lastGoldAdded = DateTime.Now;
 
                 UIGame.UpdateGoldText();
 

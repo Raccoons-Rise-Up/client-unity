@@ -119,7 +119,7 @@ namespace KRU.Game
         public void LoadTimeoutDisconnectScene() 
         {
             menuSection = MenuSection.Login;
-            StopCoroutine(gameScript.GameLoop);
+            StopCoroutine(gameScript.UILoop);
             gameCanvas.SetActive(false);
             menuCanvas.SetActive(true);
             sectionLogin.SetActive(true);

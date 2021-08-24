@@ -9,7 +9,7 @@ namespace KRU.Game
     public class Player
     {
         public bool InGame { get; set; }
-        public uint Gold { get; set; }
+        public float Gold { get; set; }
         public uint StructureHuts { get; set; }
     }
 }
