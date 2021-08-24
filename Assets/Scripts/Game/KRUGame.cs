@@ -34,6 +34,10 @@ namespace KRU.Game
 
         private void Start()
         {
+            QualitySettings.vSyncCount = 1; // Sync framerate to monitor refresh rate
+            Application.runInBackground = true;
+            Application.targetFrameRate = 60; // FPS if VSync is turned off
+
             Player = new Player();
             UILoop = UpdateUI();
         }
