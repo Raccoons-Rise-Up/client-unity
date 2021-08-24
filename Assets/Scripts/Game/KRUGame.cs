@@ -40,11 +40,11 @@ namespace KRU.Game
         {
             while (true) 
             {
-                Player.Gold += 1;
+                Player.Gold += 1 * Player.StructureHuts;
 
                 UIGame.UpdateGoldText();
 
-                yield return new WaitForSeconds(1);
+                yield return new WaitForSeconds(0.1f);
             }
         }
     }
