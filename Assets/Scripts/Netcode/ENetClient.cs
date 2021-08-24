@@ -39,76 +39,75 @@ namespace KRU.Networking
     public class ENetClient : MonoBehaviour
     {
         // Unity Inspector Variables
+        [Header("Client")]
         public string ip = "127.0.0.1";
         public ushort port = 25565;
 
+        [Header("Linked Transforms")]
         public Transform menuTranform;
-        private UIMenu menuScript;
-
         public Transform loginTransform;
-        private UILogin loginScript;
-
         public Transform terminalTransform;
-        private UITerminal terminalScript;
-
         public Transform gameTransform;
-        private KRUGame gameScript;
-        private Player player;
+
+        private static UIMenu MenuScript { get; set; }
+        private static UILogin LoginScript { get; set; }
+        private static UITerminal TerminalScript { get; set; }
+        private static KRUGame GameScript { get; set; }
+        private static Player Player { get; set; }
 
         // Non-Inspector
-        public const int clientVersionMajor = 0;
-        public const int clientVersionMinor = 1;
-        public const int clientVersionPatch = 0;
+        public static byte ClientVersionMajor { get; private set; }
+        public static byte ClientVersionMinor { get; private set; }
+        public static byte ClientVersionPatch { get; private set; }
 
-        private const int packetSizeMax = 1024;
+        private static ConcurrentQueue<UnityInstructions> UnityInstructions { get; set; } 
+        private static ConcurrentQueue<ENetInstructionOpcode> ENetInstructions { get; set; }
+        private static ConcurrentQueue<ClientPacket> Outgoing { get; set; }
 
-        private readonly ConcurrentQueue<UnityInstructions> unityInstructions = new ConcurrentQueue<UnityInstructions>(); // Need a way to communicate with the Unity thread from the ENet thread
-        private readonly ConcurrentQueue<ENetInstructionOpcode> ENetInstructions = new ConcurrentQueue<ENetInstructionOpcode>(); // Need a way to communicate with the ENet thread from the Unity thread
-        private readonly ConcurrentQueue<ClientPacket> outgoing = new ConcurrentQueue<ClientPacket>(); // The packets that are sent to the server
-
-        private const byte channelID = 0; // The channel all networking traffic will be going through
-        private const int maxFrames = 30; // The games FPS cap
-
-        private readonly uint pingInterval = 1000; // Pings are used both to monitor the liveness of the connection and also to dynamically adjust the throttle during periods of low traffic so that the throttle has reasonable responsiveness during traffic spikes.
-        private readonly uint timeout = 5000; // Will be ignored if maximum timeout is exceeded
-        private readonly uint timeoutMinimum = 5000; // The timeout for server not sending the packet to the client sent from the server
-        private readonly uint timeoutMaximum = 5000; // The timeout for server not receiving the packet sent from the client
-
-        private Peer peer;
-
-        private Thread workerThread;
-        private bool runningNetCode;
-        private bool tryingToConnect;
-        private bool connectedToServer;
-
-        private TMP_InputField inputField;
+        private static Peer Peer { get; set; }
+        private static bool TryingToConnect { get; set; }
+        private static bool ConnectedToServer { get; set; }
+        private static bool RunningNetCode { get; set; }
+        private static bool ReadyToQuitUnity { get; set; }
 
         private void Start()
         {
-            Application.targetFrameRate = maxFrames;
-            Application.runInBackground = true;
-            DontDestroyOnLoad(gameObject);
+            // Client version
+            ClientVersionMajor = 0;
+            ClientVersionMinor = 1;
+            ClientVersionPatch = 0;
 
-            menuScript = menuTranform.GetComponent<UIMenu>();
-            loginScript = loginTransform.GetComponent<UILogin>();
-            terminalScript = terminalTransform.GetComponent<UITerminal>();
-            gameScript = gameTransform.GetComponent<KRUGame>();
-            player = gameScript.Player;
+            // Need a way to communicate with the Unity thread from the ENet thread
+            UnityInstructions = new ConcurrentQueue<UnityInstructions>();
+
+            // Need a way to communicate with the ENet thread from the Unity thread
+            ENetInstructions = new ConcurrentQueue<ENetInstructionOpcode>();
+
+            // The packets that are sent to the server
+            Outgoing = new ConcurrentQueue<ClientPacket>();
+
+            DontDestroyOnLoad(gameObject);
+            Application.wantsToQuit += OnWantsToQuit;
+
+            MenuScript = menuTranform.GetComponent<UIMenu>();
+            LoginScript = loginTransform.GetComponent<UILogin>();
+            TerminalScript = terminalTransform.GetComponent<UITerminal>();
+            GameScript = gameTransform.GetComponent<KRUGame>();
+            Player = GameScript.Player;
 
             // Make sure queues are completely drained before starting
-            if (outgoing != null) while (outgoing.TryDequeue(out _)) ;
-            if (unityInstructions != null) while (unityInstructions.TryDequeue(out _)) ;
+            if (Outgoing != null) while (Outgoing.TryDequeue(out _)) ;
+            if (UnityInstructions != null) while (UnityInstructions.TryDequeue(out _)) ;
             if (ENetInstructions != null) while (ENetInstructions.TryDequeue(out _)) ;
         }
 
         public void Connect() 
         {
-            if (tryingToConnect || connectedToServer)
+            if (TryingToConnect || ConnectedToServer)
                 return;
 
-            tryingToConnect = true;
-            workerThread = new Thread(ThreadWorker);
-            workerThread.Start();
+            TryingToConnect = true;
+            new Thread(ThreadWorker).Start();
         }
 
         public void Disconnect() 
@@ -116,7 +115,7 @@ namespace KRU.Networking
             ENetInstructions.Enqueue(ENetInstructionOpcode.CancelConnection);
         }
 
-        public bool IsConnected() => connectedToServer;
+        public bool IsConnected() => ConnectedToServer;
 
         private void ThreadWorker() 
         {
@@ -128,13 +127,20 @@ namespace KRU.Networking
             address.Port = port;
             client.Create();
 
-            peer = client.Connect(address);
-            peer.PingInterval(pingInterval);
-            peer.Timeout(timeout, timeoutMinimum, timeoutMaximum);
+            uint pingInterval = 1000; // Pings are used both to monitor the liveness of the connection and also to dynamically adjust the throttle during periods of low traffic so that the throttle has reasonable responsiveness during traffic spikes.
+            uint timeout = 5000; // Will be ignored if maximum timeout is exceeded
+            uint timeoutMinimum = 5000; // The timeout for server not sending the packet to the client sent from the server
+            uint timeoutMaximum = 5000; // The timeout for server not receiving the packet sent from the client
+
+            Peer = client.Connect(address);
+            Peer.PingInterval(pingInterval);
+            Peer.Timeout(timeout, timeoutMinimum, timeoutMaximum);
             Debug.Log("Attempting to connect...");
 
-            runningNetCode = true;
-            while (runningNetCode)
+            bool wantsToQuit = false;
+
+            RunningNetCode = true;
+            while (RunningNetCode)
             {
                 var polled = false;
 
@@ -144,15 +150,23 @@ namespace KRU.Networking
                     if (result == ENetInstructionOpcode.CancelConnection)
                     {
                         Debug.Log("Cancel connection");
-                        connectedToServer = false;
-                        tryingToConnect = false;
-                        runningNetCode = false;
+                        ConnectedToServer = false;
+                        TryingToConnect = false;
+                        RunningNetCode = false;
+                        break;
+                    }
+
+                    if (result == ENetInstructionOpcode.UserWantsToQuit) 
+                    {
+                        Peer.Disconnect(0);
+                        wantsToQuit = true;
+                        RunningNetCode = false;
                         break;
                     }
                 }
 
                 // Sending data
-                while (outgoing.TryDequeue(out ClientPacket clientPacket)) 
+                while (Outgoing.TryDequeue(out ClientPacket clientPacket)) 
                 {
                     switch ((ClientPacketOpcode)clientPacket.Opcode) 
                     {
@@ -194,40 +208,41 @@ namespace KRU.Networking
 
                             // Send login request
                             var clientPacket = new ClientPacket((byte)ClientPacketOpcode.Login, new WPacketLogin { 
-                                Username = loginScript.username,
-                                VersionMajor = clientVersionMajor,
-                                VersionMinor = clientVersionMinor,
-                                VersionPatch = clientVersionPatch
+                                Username = LoginScript.username,
+                                VersionMajor = ClientVersionMajor,
+                                VersionMinor = ClientVersionMinor,
+                                VersionPatch = ClientVersionPatch
                             });
 
-                            outgoing.Enqueue(clientPacket);
+                            Outgoing.Enqueue(clientPacket);
 
                             // Keep track of networking logic
-                            tryingToConnect = false;
-                            connectedToServer = true;
+                            TryingToConnect = false;
+                            ConnectedToServer = true;
                             break;
 
                         case EventType.Disconnect:
-                            Debug.Log(netEvent.Data);
+                            //Debug.Log(netEvent.Data);
                             Debug.Log("Client disconnected from server");
-                            connectedToServer = false;
+                            ConnectedToServer = false;
                             break;
 
                         case EventType.Timeout:
                             Debug.Log("Client connection timeout to game server");
-                            tryingToConnect = false;
-                            connectedToServer = false;
-                            unityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.NotifyUserOfTimeout));
-                            unityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoadSceneForDisconnectTimeout));
+                            TryingToConnect = false;
+                            ConnectedToServer = false;
+                            UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.NotifyUserOfTimeout));
+                            UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoadSceneForDisconnectTimeout));
                             break;
 
                         case EventType.Receive:
                             var packet = netEvent.Packet;
                             Debug.Log("Packet received from server - Channel ID: " + netEvent.ChannelID + ", Data length: " + packet.Length);
 
+                            var packetSizeMax = 1024;
                             var readBuffer = new byte[packetSizeMax];
                             var packetReader = new PacketReader(readBuffer);
-                            //packetReader.BaseStream.Position = 0;
+                            packetReader.BaseStream.Position = 0;
 
                             netEvent.Packet.CopyTo(readBuffer);
 
@@ -241,25 +256,25 @@ namespace KRU.Networking
                                 if (data.LoginOpcode == LoginResponseOpcode.VersionMismatch)
                                 {
                                     var serverVersion = $"{data.VersionMajor}.{data.VersionMinor}.{data.VersionPatch}";
-                                    var clientVersion = $"{clientVersionMajor}.{clientVersionMinor}.{clientVersionPatch}";
+                                    var clientVersion = $"{ClientVersionMajor}.{ClientVersionMinor}.{ClientVersionPatch}";
 
                                     var cmd = new UnityInstructions();
                                     cmd.Set(UnityInstructionOpcode.ServerResponseMessage, 
                                         $"Version mismatch. Server ver. {serverVersion} Client ver. {clientVersion}");
 
-                                    unityInstructions.Enqueue(cmd);
+                                    UnityInstructions.Enqueue(cmd);
                                 }
 
                                 if (data.LoginOpcode == LoginResponseOpcode.LoginSuccess)
                                 {
                                     // Load the main game 'scene'
-                                    unityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoadMainScene));
+                                    UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoadMainScene));
 
                                     // Update player values
-                                    player.Gold = data.Gold;
-                                    player.StructureHuts = data.StructureHut;
+                                    Player.Gold = data.Gold;
+                                    Player.StructureHuts = data.StructureHut;
 
-                                    unityInstructions.Enqueue(new UnityInstructions (UnityInstructionOpcode.LoginSuccess));
+                                    UnityInstructions.Enqueue(new UnityInstructions (UnityInstructionOpcode.LoginSuccess));
                                 }
                             }
 
@@ -275,10 +290,10 @@ namespace KRU.Networking
                                     var cmd = new UnityInstructions();
                                     cmd.Set(UnityInstructionOpcode.LogMessage, $"You do not have enough gold for {(ItemType)data.ItemId}.");
 
-                                    unityInstructions.Enqueue(cmd);
+                                    UnityInstructions.Enqueue(cmd);
 
                                     // Update the player gold
-                                    player.Gold = data.Gold;
+                                    Player.Gold = data.Gold;
                                 }
 
                                 if (itemResponseOpcode == PurchaseItemResponseOpcode.Purchased) 
@@ -286,16 +301,16 @@ namespace KRU.Networking
                                     var cmd = new UnityInstructions();
                                     cmd.Set(UnityInstructionOpcode.LogMessage, $"Bought {(ItemType)data.ItemId} for 25 gold.");
 
-                                    unityInstructions.Enqueue(cmd);
+                                    UnityInstructions.Enqueue(cmd);
 
                                     // Update the player gold
-                                    player.Gold = data.Gold;
+                                    Player.Gold = data.Gold;
 
                                     // Update the items
                                     switch ((ItemType)data.ItemId) 
                                     {
                                         case ItemType.Hut:
-                                            player.StructureHuts++;
+                                            Player.StructureHuts++;
                                             break;
                                         case ItemType.Farm:
                                             break;
@@ -314,50 +329,67 @@ namespace KRU.Networking
             client.Dispose();
 
             Library.Deinitialize();
+
+            if (wantsToQuit) 
+            {
+                ReadyToQuitUnity = true;
+                UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.Quit));
+            }    
+        }
+
+        private static bool OnWantsToQuit()
+        {
+            ENetInstructions.Enqueue(ENetInstructionOpcode.UserWantsToQuit);
+
+            return ReadyToQuitUnity || !RunningNetCode;
         }
 
         private void Update()
         {
-            if (!runningNetCode)
-                return;
-
-            while (unityInstructions.TryDequeue(out UnityInstructions result)) 
+            while (UnityInstructions.TryDequeue(out UnityInstructions result)) 
             {
                 foreach (var cmd in result.Instructions) 
                 {
-                    if (cmd.Key == UnityInstructionOpcode.NotifyUserOfTimeout) 
+                    var opcode = cmd.Key;
+
+                    if (opcode == UnityInstructionOpcode.NotifyUserOfTimeout) 
                     {
-                        loginScript.btnConnect.interactable = true;
-                        loginScript.loginFeedbackText.text = "Client connection timeout to game server";
+                        LoginScript.btnConnect.interactable = true;
+                        LoginScript.loginFeedbackText.text = "Client connection timeout to game server";
                     }
 
-                    if (cmd.Key == UnityInstructionOpcode.ServerResponseMessage) 
+                    if (opcode == UnityInstructionOpcode.ServerResponseMessage) 
                     {
-                        loginScript.loginFeedbackText.text = (string)cmd.Value[0];
+                        LoginScript.loginFeedbackText.text = (string)cmd.Value[0];
                     }
 
-                    if (cmd.Key == UnityInstructionOpcode.LogMessage) 
+                    if (opcode == UnityInstructionOpcode.LogMessage) 
                     {
-                        terminalScript.Log((string)cmd.Value[0]);
+                        TerminalScript.Log((string)cmd.Value[0]);
                     }
 
-                    if (cmd.Key == UnityInstructionOpcode.LoadSceneForDisconnectTimeout) 
+                    if (opcode == UnityInstructionOpcode.LoadSceneForDisconnectTimeout) 
                     {
-                        menuScript.LoadTimeoutDisconnectScene();
-                        menuScript.gameScript.Player.InGame = false;
+                        MenuScript.LoadTimeoutDisconnectScene();
+                        MenuScript.gameScript.Player.InGame = false;
                     }
 
-                    if (cmd.Key == UnityInstructionOpcode.LoadMainScene) 
+                    if (opcode == UnityInstructionOpcode.LoadMainScene) 
                     {
-                        menuScript.FromConnectingToMainScene();
-                        loginScript.loginFeedbackText.text = "";
-                        loginScript.btnConnect.interactable = true;
-                        menuScript.gameScript.Player.InGame = true;
+                        MenuScript.FromConnectingToMainScene();
+                        LoginScript.loginFeedbackText.text = "";
+                        LoginScript.btnConnect.interactable = true;
+                        MenuScript.gameScript.Player.InGame = true;
                     }
 
-                    if (cmd.Key == UnityInstructionOpcode.LoginSuccess) 
+                    if (opcode == UnityInstructionOpcode.LoginSuccess) 
                     {
-                        StartCoroutine(gameScript.UILoop);
+                        StartCoroutine(GameScript.UILoop);
+                    }
+
+                    if (opcode == UnityInstructionOpcode.Quit) 
+                    {
+                        Application.Quit();
                     }
                 }
             }
@@ -368,14 +400,15 @@ namespace KRU.Networking
             var data = new WPacketPurchaseItem { ItemID = (ushort)itemId };
             var clientPacket = new ClientPacket((byte)ClientPacketOpcode.PurchaseItem, data);
 
-            outgoing.Enqueue(clientPacket);
+            Outgoing.Enqueue(clientPacket);
         }
 
         private void Send(GamePacket gamePacket, PacketFlags packetFlags)
         {
+            byte channelID = 0; // The channel all networking traffic will be going through
             var packet = default(Packet);
             packet.Create(gamePacket.Data, packetFlags);
-            peer.Send(channelID, ref packet);
+            Peer.Send(channelID, ref packet);
         }
     }
 
@@ -409,11 +442,13 @@ namespace KRU.Networking
         LogMessage,
         ServerResponseMessage,
         NotifyUserOfTimeout,
-        LoginSuccess
+        LoginSuccess,
+        Quit
     }
 
     public enum ENetInstructionOpcode 
     {
-        CancelConnection
+        CancelConnection,
+        UserWantsToQuit
     }
 }
