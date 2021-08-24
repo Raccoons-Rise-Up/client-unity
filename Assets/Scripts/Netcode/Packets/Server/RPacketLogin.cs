@@ -11,6 +11,7 @@ namespace KRU.Networking
         public byte VersionMinor { get; set; }
         public byte VersionPatch { get; set; }
         public uint Gold { get; set; }
+        public uint StructureHut { get; set; }
 
         public void Read(PacketReader reader)
         {
@@ -25,6 +26,7 @@ namespace KRU.Networking
                     break;
                 case LoginResponseOpcode.LoginSuccess:
                     Gold = reader.ReadUInt32();
+                    StructureHut = reader.ReadUInt32();
                     break;
             }
         }
