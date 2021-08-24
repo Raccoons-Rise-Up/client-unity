@@ -1,5 +1,5 @@
 # Contributing
-Hello and welcome to the constributing section for the Kittens Rise Up game client! The codebase is constantly changing, if anything comes across as confusing or is unclear please tell me about it in the [Kittens Rise Up Discord](https://discord.gg/cDNf8ja) or create a issue in this repository and I will have a look at it.
+Hello and welcome to the constributing section for the Kittens Rise Up game client! The codebase is constantly changing, if anything comes across as confusing or you notice something is not matching with what is said here please tell me about it in the [Kittens Rise Up Discord](https://discord.gg/cDNf8ja) or create a issue in this repository and I will have a look at it.
 
 ## Table of Contents
 1. [Setup Project](#setup-project)
@@ -9,6 +9,7 @@ Hello and welcome to the constributing section for the Kittens Rise Up game clie
     - [Communicating from Unity Thread to ENet Thread](#communicating-from-unity-thread-to-enet-thread)
     - [Communicating from ENet Thread to Unity Thread](#communicating-from-enet-thread-to-unity-thread)
 5. [Networking](#networking)
+    - [Security](#security)
     - [Sending a Packet from the Client to the Server](#sending-a-packet-from-the-client-to-the-server)
     - [Sending a Packet from the Server to the Client](#sending-a-packet-from-the-server-to-the-client)
 
@@ -114,6 +115,9 @@ while (unityInstructions.TryDequeue(out UnityInstruction result))
 ```
 
 ## Networking
+### Security
+Never give the client any authority, the server always has the final say in everything. This should always be thought of when sending new packets.
+
 ### Sending a Packet from the Client to the Server
 
 1. [Creating the Writer Packet](#creating-the-writer-packet)
