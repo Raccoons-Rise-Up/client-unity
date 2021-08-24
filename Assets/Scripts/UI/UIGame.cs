@@ -43,8 +43,8 @@ public class UIGame : MonoBehaviour
         else
         {
             // Make sure upper left panel is closed
-            if (panelUpperLeft.activeSelf)
-                panelUpperLeft.SetActive(false);
+            //if (panelUpperLeft.activeSelf)
+                //panelUpperLeft.SetActive(false);
 
             panelMiddle.SetActive(true);
         }
