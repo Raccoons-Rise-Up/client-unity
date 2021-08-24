@@ -24,6 +24,7 @@ using EventType = ENet.EventType;  // fixes CS0104 ambigous reference between th
 using Event = ENet.Event;          // fixes CS0104 ambigous reference between the same thing in UnityEngine
 
 using System.IO;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Threading;
 using UnityEngine;
@@ -62,7 +63,7 @@ namespace KRU.Networking
         private const int PACKET_SIZE_MAX = 1024;
 
         private readonly ConcurrentQueue<UnityInstruction> unityInstructions = new ConcurrentQueue<UnityInstruction>(); // Need a way to communicate with the Unity thread from the ENet thread
-        private readonly ConcurrentQueue<ENetInstruction> ENetInstructions = new ConcurrentQueue<ENetInstruction>(); // Need a way to communicate with the ENet thread from the Unity thread
+        private readonly ConcurrentQueue<ENetInstructionOpcode> ENetInstructions = new ConcurrentQueue<ENetInstructionOpcode>(); // Need a way to communicate with the ENet thread from the Unity thread
         private readonly ConcurrentQueue<ClientPacket> outgoing = new ConcurrentQueue<ClientPacket>(); // The packets that are sent to the server
 
         private const byte channelID = 0; // The channel all networking traffic will be going through
@@ -112,7 +113,7 @@ namespace KRU.Networking
 
         public void Disconnect() 
         {
-            ENetInstructions.Enqueue(ENetInstruction.CancelConnection);
+            ENetInstructions.Enqueue(ENetInstructionOpcode.CancelConnection);
         }
 
         public bool IsConnected() => connectedToServer;
@@ -138,9 +139,9 @@ namespace KRU.Networking
                 var polled = false;
 
                 // ENet Instructions (from Unity Thread)
-                while (ENetInstructions.TryDequeue(out ENetInstruction result))
+                while (ENetInstructions.TryDequeue(out ENetInstructionOpcode result))
                 {
-                    if (result == ENetInstruction.CancelConnection)
+                    if (result == ENetInstructionOpcode.CancelConnection)
                     {
                         Debug.Log("Cancel connection");
                         connectedToServer = false;
@@ -216,8 +217,8 @@ namespace KRU.Networking
                             Debug.Log("Client connection timeout to game server");
                             tryingToConnect = false;
                             connectedToServer = false;
-                            unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.NotifyUserOfTimeout });
-                            unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.LoadSceneForDisconnectTimeout });
+                            unityInstructions.Enqueue(new UnityInstruction(UnityInstructionOpcode.NotifyUserOfTimeout));
+                            unityInstructions.Enqueue(new UnityInstruction(UnityInstructionOpcode.LoadSceneForDisconnectTimeout));
                             break;
 
                         case EventType.Receive:
@@ -242,25 +243,22 @@ namespace KRU.Networking
                                     var serverVersion = $"{data.VersionMajor}.{data.VersionMinor}.{data.VersionPatch}";
                                     var clientVersion = $"{CLIENT_VERSION_MAJOR}.{CLIENT_VERSION_MINOR}.{CLIENT_VERSION_PATCH}";
 
-                                    unityInstructions.Enqueue(new UnityInstruction
-                                    {
-                                        type = UnityInstruction.Type.ServerResponseMessage,
-                                        Message = $"Version mismatch. Server ver. {serverVersion} Client ver. {clientVersion}"
-                                    });
+                                    var instruction = new UnityInstruction(UnityInstructionOpcode.ServerResponseMessage);
+                                    instruction.Write($"Version mismatch. Server ver. {serverVersion} Client ver. {clientVersion}");
+
+                                    unityInstructions.Enqueue(instruction);
                                 }
 
                                 if (data.LoginOpcode == LoginResponseOpcode.LoginSuccess)
                                 {
                                     // Load the main game 'scene'
-                                    unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.LoadMainScene });
+                                    unityInstructions.Enqueue(new UnityInstruction(UnityInstructionOpcode.LoadMainScene));
 
-                                    // Update the player gold
-                                    unityInstructions.Enqueue(new UnityInstruction { 
-                                        type = UnityInstruction.Type.UpdateGoldText ,
-                                        Message = data.Gold.ToString()
-                                    });
+                                    // Update player values
+                                    player.Gold = data.Gold;
+                                    player.StructureHuts = data.StructureHut;
 
-                                    unityInstructions.Enqueue(new UnityInstruction { type = UnityInstruction.Type.LoginSuccess });
+                                    unityInstructions.Enqueue(new UnityInstruction (UnityInstructionOpcode.LoginSuccess));
                                 }
                             }
 
@@ -269,38 +267,38 @@ namespace KRU.Networking
                                 var data = new RPacketPurchaseItem();
                                 data.Read(packetReader);
 
-                                switch (data.PurchaseItemResponseOpcode) 
+                                var itemResponseOpcode = data.PurchaseItemResponseOpcode;
+
+                                if (itemResponseOpcode == PurchaseItemResponseOpcode.NotEnoughGold) 
                                 {
-                                    case PurchaseItemResponseOpcode.NotEnoughGold:
-                                        unityInstructions.Enqueue(new UnityInstruction
-                                        {
-                                            type = UnityInstruction.Type.LogMessage,
-                                            Message = $"You do not have enough gold for {(ItemType)data.ItemId}."
-                                        });
+                                    var instructionLogMessage = new UnityInstruction(UnityInstructionOpcode.LogMessage);
+                                    instructionLogMessage.Write($"You do not have enough gold for {(ItemType)data.ItemId}.");
 
-                                        // Update the player gold
-                                        unityInstructions.Enqueue(new UnityInstruction
-                                        {
-                                            type = UnityInstruction.Type.UpdateGoldText,
-                                            Message = data.Gold.ToString()
-                                        });
-                                        break;
-                                    case PurchaseItemResponseOpcode.Purchased:
-                                        // TODO: Update player gold from server
+                                    unityInstructions.Enqueue(instructionLogMessage);
 
-                                        unityInstructions.Enqueue(new UnityInstruction
-                                        {
-                                            type = UnityInstruction.Type.LogMessage,
-                                            Message = $"Bought {(ItemType)data.ItemId} for 25 gold."
-                                        });
+                                    // Update the player gold
+                                    player.Gold = data.Gold;
+                                }
 
-                                        // Update the player gold
-                                        unityInstructions.Enqueue(new UnityInstruction
-                                        {
-                                            type = UnityInstruction.Type.UpdateGoldText,
-                                            Message = data.Gold.ToString()
-                                        });
-                                        break;
+                                if (itemResponseOpcode == PurchaseItemResponseOpcode.Purchased) 
+                                {
+                                    var instructionLogMessage = new UnityInstruction(UnityInstructionOpcode.LogMessage);
+                                    instructionLogMessage.Write($"Bought {(ItemType)data.ItemId} for 25 gold.");
+
+                                    unityInstructions.Enqueue(instructionLogMessage);
+
+                                    // Update the player gold
+                                    player.Gold = data.Gold;
+
+                                    // Update the items
+                                    switch ((ItemType)data.ItemId) 
+                                    {
+                                        case ItemType.Hut:
+                                            player.StructureHuts++;
+                                            break;
+                                        case ItemType.Farm:
+                                            break;
+                                    }
                                 }
                             }
 
@@ -324,32 +322,29 @@ namespace KRU.Networking
 
             while (unityInstructions.TryDequeue(out UnityInstruction result)) 
             {
-                switch (result.type) 
+                switch (result.Opcode) 
                 {
-                    case UnityInstruction.Type.NotifyUserOfTimeout:
+                    case UnityInstructionOpcode.NotifyUserOfTimeout:
                         loginScript.btnConnect.interactable = true;
                         loginScript.loginFeedbackText.text = "Client connection timeout to game server";
                         break;
-                    case UnityInstruction.Type.ServerResponseMessage:
-                        loginScript.loginFeedbackText.text = result.Message;
+                    case UnityInstructionOpcode.ServerResponseMessage:
+                        loginScript.loginFeedbackText.text = (string)result.Data[0];
                         break;
-                    case UnityInstruction.Type.LogMessage:
-                        terminalScript.Log(result.Message);
+                    case UnityInstructionOpcode.LogMessage:
+                        terminalScript.Log((string)result.Data[0]);
                         break;
-                    case UnityInstruction.Type.LoadSceneForDisconnectTimeout:
+                    case UnityInstructionOpcode.LoadSceneForDisconnectTimeout:
                         menuScript.LoadTimeoutDisconnectScene();
                         menuScript.gameScript.Player.InGame = false;
                         break;
-                    case UnityInstruction.Type.LoadMainScene:
+                    case UnityInstructionOpcode.LoadMainScene:
                         menuScript.FromConnectingToMainScene();
                         loginScript.loginFeedbackText.text = "";
                         loginScript.btnConnect.interactable = true;
                         menuScript.gameScript.Player.InGame = true;
                         break;
-                    case UnityInstruction.Type.UpdateGoldText:
-                        player.Gold = uint.Parse(result.Message);
-                        break;
-                    case UnityInstruction.Type.LoginSuccess:
+                    case UnityInstructionOpcode.LoginSuccess:
                         StartCoroutine(gameScript.GameLoop);
                         break;
                 }
@@ -374,22 +369,32 @@ namespace KRU.Networking
 
     public class UnityInstruction 
     {
-        public enum Type 
+        public UnityInstructionOpcode Opcode { get; set; }
+        public List<object> Data { get; set; }
+
+        public UnityInstruction(UnityInstructionOpcode opcode) 
         {
-            LoadSceneForDisconnectTimeout,
-            LoadMainScene,
-            LogMessage,
-            ServerResponseMessage,
-            NotifyUserOfTimeout,
-            UpdateGoldText,
-            LoginSuccess
+            Opcode = opcode;
+            Data = new List<object>();
         }
 
-        public Type type;
-        public string Message;
+        public void Write(object obj) 
+        {
+            Data.Add(obj);
+        }
     }
 
-    public enum ENetInstruction 
+    public enum UnityInstructionOpcode
+    {
+        LoadSceneForDisconnectTimeout,
+        LoadMainScene,
+        LogMessage,
+        ServerResponseMessage,
+        NotifyUserOfTimeout,
+        LoginSuccess
+    }
+
+    public enum ENetInstructionOpcode 
     {
         CancelConnection
     }
