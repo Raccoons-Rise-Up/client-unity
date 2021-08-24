@@ -31,8 +31,7 @@ namespace KRU.Game
         private enum LoginOpcode
         {
             LOGIN_SUCCESS,
-            INVALID_USERNAME,
-            INVALID_PASSWORD,
+            INVALID_USERNAME_OR_PASSWORD,
             ACCOUNT_DOES_NOT_EXIST,
             PASSWORDS_DO_NOT_MATCH
         }
@@ -124,12 +123,8 @@ namespace KRU.Game
                     loginFeedbackText.text = "Account does not exist";
                     btnConnect.interactable = true;
                     break;
-                case LoginOpcode.INVALID_PASSWORD:
-                    loginFeedbackText.text = "Invalid password";
-                    btnConnect.interactable = true;
-                    break;
-                case LoginOpcode.INVALID_USERNAME:
-                    loginFeedbackText.text = "Invalid username";
+                case LoginOpcode.INVALID_USERNAME_OR_PASSWORD:
+                    loginFeedbackText.text = "Invalid username or password";
                     btnConnect.interactable = true;
                     break;
                 case LoginOpcode.PASSWORDS_DO_NOT_MATCH:
