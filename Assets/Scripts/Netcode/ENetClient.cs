@@ -23,6 +23,7 @@ using ENet;
 using EventType = ENet.EventType;  // fixes CS0104 ambigous reference between the same thing in UnityEngine
 using Event = ENet.Event;          // fixes CS0104 ambigous reference between the same thing in UnityEngine
 
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -68,6 +69,9 @@ namespace KRU.Networking
         private static bool ConnectedToServer { get; set; }
         private static bool RunningNetCode { get; set; }
         private static bool ReadyToQuitUnity { get; set; }
+
+        private static DateTime LastLogin { get; set; }
+        private static DateTime LastHutPurchase { get; set; }
 
         private void Start()
         {
@@ -176,6 +180,7 @@ namespace KRU.Networking
                             break;
                         case ClientPacketOpcode.PurchaseItem:
                             Debug.Log("Sending purchase item request to game server..");
+                            LastHutPurchase = DateTime.Now;
 
                             Send(clientPacket, PacketFlags.Reliable);
 
@@ -221,6 +226,8 @@ namespace KRU.Networking
 
                         case EventType.Disconnect:
                             //Debug.Log(netEvent.Data);
+                            Debug.Log($"{(int)(DateTime.Now - LastLogin).TotalSeconds} seconds passed since last login");
+                            Debug.Log($"{(int)(DateTime.Now - LastHutPurchase).TotalSeconds} seconds passed since last hut purchase");
                             Debug.Log("Client disconnected from server");
                             ConnectedToServer = false;
                             break;
@@ -275,6 +282,8 @@ namespace KRU.Networking
                                     };
 
                                     UnityInstructions.Enqueue(new UnityInstructions (UnityInstructionOpcode.LoginSuccess));
+
+                                    LastLogin = DateTime.Now;
                                 }
                             }
 

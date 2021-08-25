@@ -55,7 +55,7 @@ namespace KRU.Game
                 var diff = (DateTime.Now - lastGoldAdded).TotalSeconds;
 
                 Player.Gold += (float)(structureHutGoldGenerated * Player.StructureHuts * diff);
-                Debug.Log(Player.Gold);
+                //Debug.Log(Player.Gold);
 
                 lastGoldAdded = DateTime.Now;
 
