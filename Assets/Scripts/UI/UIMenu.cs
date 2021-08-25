@@ -60,7 +60,7 @@ namespace KRU.Game
         {
             if (Input.GetKeyDown(KeyCode.Escape)) 
             {
-                if (gameScript.Player.InGame) 
+                if (gameScript.InGame) 
                 {
                     if (menuSection == MenuSection.GameMenu)
                     {
@@ -94,7 +94,7 @@ namespace KRU.Game
                     
                     sectionOptions.SetActive(false);
 
-                    if (gameScript.Player.InGame)
+                    if (gameScript.InGame)
                     {
                         menuSection = MenuSection.GameMenu;
                         sectionGameMenu.SetActive(true);
@@ -119,6 +119,7 @@ namespace KRU.Game
         public void LoadTimeoutDisconnectScene() 
         {
             menuSection = MenuSection.Login;
+            gameScript.UILoopRunning = false;
             StopCoroutine(gameScript.UILoop);
             gameCanvas.SetActive(false);
             menuCanvas.SetActive(true);
@@ -148,7 +149,7 @@ namespace KRU.Game
             sectionGameMenu.SetActive(false);
             menuSection = MenuSection.MainMenu;
             sectionMainMenu.SetActive(true);
-            gameScript.Player.InGame = false;
+            gameScript.InGame = false;
             btnLogin.interactable = true;
             clientScript.Disconnect();
         }
@@ -157,7 +158,7 @@ namespace KRU.Game
         {
             menuSection = MenuSection.Options;
 
-            if (gameScript.Player.InGame) 
+            if (gameScript.InGame) 
             {
                 sectionGameMenu.SetActive(false);
             }

@@ -12,7 +12,7 @@ public class UIGame : MonoBehaviour
     public GameObject panelMiddle;
 
     public GameObject gameTransform;
-    private static Player player;
+    private static KRUGame gameScript;
 
     //private SectionMiddle sectionMiddle;
 
@@ -28,7 +28,7 @@ public class UIGame : MonoBehaviour
     private void Start()
     {
         tmpGoldText = goGoldText.GetComponent<TextMeshProUGUI>();
-        player = gameTransform.GetComponent<KRUGame>().Player;
+        gameScript = gameTransform.GetComponent<KRUGame>();
 
         //sectionMiddle = SectionMiddle.None;
         panelMiddle.SetActive(false);
@@ -71,6 +71,6 @@ public class UIGame : MonoBehaviour
 
     public static void UpdateGoldText() 
     {
-        tmpGoldText.text = player.Gold.ToString();
+        tmpGoldText.text = gameScript.Player.Gold.ToString();
     }
 }

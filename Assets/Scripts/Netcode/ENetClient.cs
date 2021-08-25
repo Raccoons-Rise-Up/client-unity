@@ -53,7 +53,6 @@ namespace KRU.Networking
         private static UILogin LoginScript { get; set; }
         private static UITerminal TerminalScript { get; set; }
         private static KRUGame GameScript { get; set; }
-        private static Player Player { get; set; }
 
         // Non-Inspector
         public static byte ClientVersionMajor { get; private set; }
@@ -93,7 +92,6 @@ namespace KRU.Networking
             LoginScript = loginTransform.GetComponent<UILogin>();
             TerminalScript = terminalTransform.GetComponent<UITerminal>();
             GameScript = gameTransform.GetComponent<KRUGame>();
-            Player = GameScript.Player;
 
             // Make sure queues are completely drained before starting
             if (Outgoing != null) while (Outgoing.TryDequeue(out _)) ;
@@ -231,8 +229,7 @@ namespace KRU.Networking
                             Debug.Log("Client connection timeout to game server");
                             TryingToConnect = false;
                             ConnectedToServer = false;
-                            UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.NotifyUserOfTimeout));
-                            UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoadSceneForDisconnectTimeout));
+                            UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.Timeout));
                             break;
 
                         case EventType.Receive:
@@ -271,8 +268,11 @@ namespace KRU.Networking
                                     UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoadMainScene));
 
                                     // Update player values
-                                    Player.Gold = data.Gold;
-                                    Player.StructureHuts = data.StructureHut;
+                                    MenuScript.gameScript.Player = new Player
+                                    {
+                                        Gold = data.Gold,
+                                        StructureHuts = data.StructureHut
+                                    };
 
                                     UnityInstructions.Enqueue(new UnityInstructions (UnityInstructionOpcode.LoginSuccess));
                                 }
@@ -293,7 +293,7 @@ namespace KRU.Networking
                                     UnityInstructions.Enqueue(cmd);
 
                                     // Update the player gold
-                                    Player.Gold = data.Gold;
+                                    GameScript.Player.Gold = data.Gold;
                                 }
 
                                 if (itemResponseOpcode == PurchaseItemResponseOpcode.Purchased) 
@@ -304,13 +304,13 @@ namespace KRU.Networking
                                     UnityInstructions.Enqueue(cmd);
 
                                     // Update the player gold
-                                    Player.Gold = data.Gold;
+                                    GameScript.Player.Gold = data.Gold;
 
                                     // Update the items
                                     switch ((ItemType)data.ItemId) 
                                     {
                                         case ItemType.Hut:
-                                            Player.StructureHuts++;
+                                            GameScript.Player.StructureHuts++;
                                             break;
                                         case ItemType.Farm:
                                             break;
@@ -352,12 +352,6 @@ namespace KRU.Networking
                 {
                     var opcode = cmd.Key;
 
-                    if (opcode == UnityInstructionOpcode.NotifyUserOfTimeout) 
-                    {
-                        LoginScript.btnConnect.interactable = true;
-                        LoginScript.loginFeedbackText.text = "Client connection timeout to game server";
-                    }
-
                     if (opcode == UnityInstructionOpcode.ServerResponseMessage) 
                     {
                         LoginScript.loginFeedbackText.text = (string)cmd.Value[0];
@@ -368,10 +362,20 @@ namespace KRU.Networking
                         TerminalScript.Log((string)cmd.Value[0]);
                     }
 
-                    if (opcode == UnityInstructionOpcode.LoadSceneForDisconnectTimeout) 
+                    if (opcode == UnityInstructionOpcode.Timeout) 
                     {
+                        // Load timeout scene
+                        LoginScript.btnConnect.interactable = true;
+                        LoginScript.loginFeedbackText.text = "Client connection timeout to game server";
+
                         MenuScript.LoadTimeoutDisconnectScene();
-                        MenuScript.gameScript.Player.InGame = false;
+                        MenuScript.gameScript.InGame = false;
+
+                        // Reset player values
+                        MenuScript.gameScript.Player = null;
+
+                        // Clear terminal output
+                        //TerminalScript.
                     }
 
                     if (opcode == UnityInstructionOpcode.LoadMainScene) 
@@ -379,11 +383,12 @@ namespace KRU.Networking
                         MenuScript.FromConnectingToMainScene();
                         LoginScript.loginFeedbackText.text = "";
                         LoginScript.btnConnect.interactable = true;
-                        MenuScript.gameScript.Player.InGame = true;
+                        MenuScript.gameScript.InGame = true;
                     }
 
                     if (opcode == UnityInstructionOpcode.LoginSuccess) 
                     {
+                        GameScript.UILoopRunning = true;
                         StartCoroutine(GameScript.UILoop);
                     }
 
@@ -437,11 +442,10 @@ namespace KRU.Networking
 
     public enum UnityInstructionOpcode
     {
-        LoadSceneForDisconnectTimeout,
         LoadMainScene,
         LogMessage,
         ServerResponseMessage,
-        NotifyUserOfTimeout,
+        Timeout,
         LoginSuccess,
         Quit
     }

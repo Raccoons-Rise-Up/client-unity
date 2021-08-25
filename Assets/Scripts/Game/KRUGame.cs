@@ -31,6 +31,8 @@ namespace KRU.Game
         public Player Player { get; set; }
 
         public IEnumerator UILoop { get; private set; }
+        public bool UILoopRunning { get; set; }
+        public bool InGame { get; set; }
 
         private void Start()
         {
@@ -38,15 +40,15 @@ namespace KRU.Game
             Application.runInBackground = true;
             Application.targetFrameRate = 60; // FPS if VSync is turned off
 
-            Player = new Player();
             UILoop = UpdateUI();
         }
 
         private IEnumerator UpdateUI() 
         {
             var lastGoldAdded = DateTime.Now;
+            UILoopRunning = true;
 
-            while (true) 
+            while (UILoopRunning) 
             {
                 var structureHutGoldGenerated = 1;
 
