@@ -2,10 +2,13 @@ using TMPro;
 using System;
 using System.Text;
 using System.Collections;
+using System.Diagnostics;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
+
+using Debug = UnityEngine.Debug;
 
 namespace KRU.Game 
 {

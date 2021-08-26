@@ -22,9 +22,11 @@
 using ENet;
 using EventType = ENet.EventType;  // fixes CS0104 ambigous reference between the same thing in UnityEngine
 using Event = ENet.Event;          // fixes CS0104 ambigous reference between the same thing in UnityEngine
+using Debug = UnityEngine.Debug;
 
 using System;
 using System.IO;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Threading;
@@ -50,19 +52,20 @@ namespace KRU.Networking
         public Transform terminalTransform;
         public Transform gameTransform;
 
-        private static UIMenu MenuScript { get; set; }
+        public static UIMenu MenuScript { get; set; }
         private static UILogin LoginScript { get; set; }
         private static UITerminal TerminalScript { get; set; }
-        private static KRUGame GameScript { get; set; }
+        public static KRUGame GameScript { get; set; }
 
         // Non-Inspector
         public static byte ClientVersionMajor { get; private set; }
         public static byte ClientVersionMinor { get; private set; }
         public static byte ClientVersionPatch { get; private set; }
 
-        private static ConcurrentQueue<UnityInstructions> UnityInstructions { get; set; } 
+        public static ConcurrentQueue<UnityInstructions> UnityInstructions { get; set; } 
         private static ConcurrentQueue<ENetInstructionOpcode> ENetInstructions { get; set; }
         private static ConcurrentQueue<ClientPacket> Outgoing { get; set; }
+        private static ConcurrentBag<Event> Incoming { get; set; }
 
         private static Peer Peer { get; set; }
         private static bool TryingToConnect { get; set; }
@@ -70,7 +73,6 @@ namespace KRU.Networking
         private static bool RunningNetCode { get; set; }
         private static bool ReadyToQuitUnity { get; set; }
 
-        private static DateTime LastLogin { get; set; }
         private static DateTime LastHutPurchase { get; set; }
 
         private void Start()
@@ -88,6 +90,9 @@ namespace KRU.Networking
 
             // The packets that are sent to the server
             Outgoing = new ConcurrentQueue<ClientPacket>();
+
+            // The packets received from the server
+            Incoming = new ConcurrentBag<Event>();
 
             DontDestroyOnLoad(gameObject);
             Application.wantsToQuit += OnWantsToQuit;
@@ -158,7 +163,7 @@ namespace KRU.Networking
                         break;
                     }
 
-                    if (result == ENetInstructionOpcode.UserWantsToQuit) 
+                    if (result == ENetInstructionOpcode.UserWantsToQuit)
                     {
                         Peer.Disconnect(0);
                         wantsToQuit = true;
@@ -167,7 +172,14 @@ namespace KRU.Networking
                     }
                 }
 
-                // Sending data
+                // Incoming
+                while (Incoming.TryTake(out Event netEvent)) 
+                {
+                    HandlePacket.Handle(ref netEvent);
+                    netEvent.Packet.Dispose();
+                }
+
+                // Outgoing
                 while (Outgoing.TryDequeue(out ClientPacket clientPacket)) 
                 {
                     switch ((ClientPacketOpcode)clientPacket.Opcode) 
@@ -271,95 +283,8 @@ namespace KRU.Networking
 
                     if (eventType == EventType.Receive) 
                     {
-                        var packet = netEvent.Packet;
-                        Debug.Log("Packet received from server - Channel ID: " + netEvent.ChannelID + ", Data length: " + packet.Length);
-
-                        var packetSizeMax = 1024;
-                        var readBuffer = new byte[packetSizeMax];
-                        var packetReader = new PacketReader(readBuffer);
-                        packetReader.BaseStream.Position = 0;
-
-                        netEvent.Packet.CopyTo(readBuffer);
-
-                        var opcode = (ServerPacketOpcode)packetReader.ReadByte();
-
-                        if (opcode == ServerPacketOpcode.LoginResponse)
-                        {
-                            var data = new RPacketLogin();
-                            data.Read(packetReader);
-
-                            if (data.LoginOpcode == LoginResponseOpcode.VersionMismatch)
-                            {
-                                var serverVersion = $"{data.VersionMajor}.{data.VersionMinor}.{data.VersionPatch}";
-                                var clientVersion = $"{ClientVersionMajor}.{ClientVersionMinor}.{ClientVersionPatch}";
-
-                                var cmd = new UnityInstructions();
-                                cmd.Set(UnityInstructionOpcode.ServerResponseMessage,
-                                    $"Version mismatch. Server ver. {serverVersion} Client ver. {clientVersion}");
-
-                                UnityInstructions.Enqueue(cmd);
-                            }
-
-                            if (data.LoginOpcode == LoginResponseOpcode.LoginSuccess)
-                            {
-                                // Load the main game 'scene'
-                                UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoadMainScene));
-
-                                // Update player values
-                                MenuScript.gameScript.Player = new Player
-                                {
-                                    Gold = data.Gold,
-                                    StructureHuts = data.StructureHut
-                                };
-
-                                UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoginSuccess));
-
-                                LastLogin = DateTime.Now;
-                            }
-                        }
-
-                        if (opcode == ServerPacketOpcode.PurchasedItem)
-                        {
-                            var data = new RPacketPurchaseItem();
-                            data.Read(packetReader);
-
-                            var itemResponseOpcode = data.PurchaseItemResponseOpcode;
-
-                            if (itemResponseOpcode == PurchaseItemResponseOpcode.NotEnoughGold)
-                            {
-                                var cmd = new UnityInstructions();
-                                cmd.Set(UnityInstructionOpcode.LogMessage, $"You do not have enough gold for {(ItemType)data.ItemId}.");
-
-                                UnityInstructions.Enqueue(cmd);
-
-                                // Update the player gold
-                                GameScript.Player.Gold = data.Gold;
-                            }
-
-                            if (itemResponseOpcode == PurchaseItemResponseOpcode.Purchased)
-                            {
-                                var cmd = new UnityInstructions();
-                                cmd.Set(UnityInstructionOpcode.LogMessage, $"Bought {(ItemType)data.ItemId} for 25 gold.");
-
-                                UnityInstructions.Enqueue(cmd);
-
-                                // Update the player gold
-                                GameScript.Player.Gold = data.Gold;
-
-                                // Update the items
-                                switch ((ItemType)data.ItemId)
-                                {
-                                    case ItemType.Hut:
-                                        GameScript.Player.StructureHuts++;
-                                        break;
-                                    case ItemType.Farm:
-                                        break;
-                                }
-                            }
-                        }
-
-                        packetReader.Dispose();
-                        packet.Dispose();
+                        //Debug.Log("Packet received from server - Channel ID: " + netEvent.ChannelID + ", Data length: " + packet.Length);
+                        Incoming.Add(netEvent);
                     }
                 }
             }
