@@ -18,6 +18,8 @@ Download [Unity Hub](https://unity.com/download)
 
 Project is currently using `2021.1.7f1`, later versions should work just fine.
 
+Note that you will need to setup the [web-server](https://github.com/Kittens-Rise-Up/website) and [game-server](https://github.com/Kittens-Rise-Up/server) as well if you want to login properly. (The client logs into the web-server then the game-server)
+
 ## Formatting Guidelines
 - Methods should follow PascalFormat
 - Most of the time `{}` should be fully expanded
