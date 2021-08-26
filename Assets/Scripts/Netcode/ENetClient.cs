@@ -199,137 +199,167 @@ namespace KRU.Networking
                         polled = true;
                     }
 
-                    switch (netEvent.Type)
+                    var eventType = netEvent.Type;
+
+                    if (eventType == EventType.None) 
                     {
-                        case EventType.None:
-                            Debug.Log("Nothing");
-                            break;
+                        Debug.Log("Nothing");
+                    }
 
-                        case EventType.Connect:
-                            // Successfully connected to the game server
-                            Debug.Log("Client connected to game server");
+                    if (eventType == EventType.Connect) 
+                    {
+                        // Successfully connected to the game server
+                        Debug.Log("Client connected to game server");
 
-                            // Send login request
-                            var clientPacket = new ClientPacket((byte)ClientPacketOpcode.Login, new WPacketLogin { 
-                                Username = LoginScript.username,
-                                VersionMajor = ClientVersionMajor,
-                                VersionMinor = ClientVersionMinor,
-                                VersionPatch = ClientVersionPatch
-                            });
+                        // Send login request
+                        var clientPacket = new ClientPacket((byte)ClientPacketOpcode.Login, new WPacketLogin
+                        {
+                            Username = LoginScript.username,
+                            VersionMajor = ClientVersionMajor,
+                            VersionMinor = ClientVersionMinor,
+                            VersionPatch = ClientVersionPatch
+                        });
 
-                            Outgoing.Enqueue(clientPacket);
+                        Outgoing.Enqueue(clientPacket);
 
-                            // Keep track of networking logic
-                            TryingToConnect = false;
-                            ConnectedToServer = true;
-                            break;
+                        // Keep track of networking logic
+                        TryingToConnect = false;
+                        ConnectedToServer = true;
+                    }
 
-                        case EventType.Disconnect:
-                            //Debug.Log(netEvent.Data);
-                            Debug.Log($"{(int)(DateTime.Now - LastLogin).TotalSeconds} seconds passed since last login");
-                            Debug.Log($"{(int)(DateTime.Now - LastHutPurchase).TotalSeconds} seconds passed since last hut purchase");
-                            Debug.Log("Client disconnected from server");
-                            ConnectedToServer = false;
-                            break;
+                    if (eventType == EventType.Disconnect) 
+                    {
+                        var opcode = (DisconnectOpcode)netEvent.Data;
+                        var cmd = new UnityInstructions();
 
-                        case EventType.Timeout:
-                            Debug.Log("Client connection timeout to game server");
-                            TryingToConnect = false;
-                            ConnectedToServer = false;
-                            UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.Timeout));
-                            break;
+                        switch (opcode)
+                        {
+                            case DisconnectOpcode.Disconnected:
+                                cmd.Set(UnityInstructionOpcode.Disconnect, DisconnectOpcode.Disconnected);
+                                Debug.Log("Client was disconnected");
+                                break;
+                            case DisconnectOpcode.Maintenance:
+                                cmd.Set(UnityInstructionOpcode.Disconnect, DisconnectOpcode.Maintenance);
+                                Debug.Log("Client was disconnected because the server is going down for maintenance");
+                                break;
+                            case DisconnectOpcode.Restarting:
+                                cmd.Set(UnityInstructionOpcode.Disconnect, DisconnectOpcode.Restarting);
+                                Debug.Log("Client was disconnected because the server is restarting");
+                                break;
+                            case DisconnectOpcode.Kicked:
+                                cmd.Set(UnityInstructionOpcode.Disconnect, DisconnectOpcode.Kicked);
+                                Debug.Log("Client was kicked");
+                                break;
+                            case DisconnectOpcode.Banned:
+                                cmd.Set(UnityInstructionOpcode.Disconnect, DisconnectOpcode.Banned);
+                                Debug.Log("Client was banned");
+                                break;
+                        }
 
-                        case EventType.Receive:
-                            var packet = netEvent.Packet;
-                            Debug.Log("Packet received from server - Channel ID: " + netEvent.ChannelID + ", Data length: " + packet.Length);
+                        TryingToConnect = false;
+                        ConnectedToServer = false;
+                        UnityInstructions.Enqueue(cmd);
+                    }
 
-                            var packetSizeMax = 1024;
-                            var readBuffer = new byte[packetSizeMax];
-                            var packetReader = new PacketReader(readBuffer);
-                            packetReader.BaseStream.Position = 0;
+                    if (eventType == EventType.Timeout) 
+                    {
+                        Debug.Log("Client connection timeout to game server");
+                        TryingToConnect = false;
+                        ConnectedToServer = false;
+                        UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.Timeout));
+                    }
 
-                            netEvent.Packet.CopyTo(readBuffer);
+                    if (eventType == EventType.Receive) 
+                    {
+                        var packet = netEvent.Packet;
+                        Debug.Log("Packet received from server - Channel ID: " + netEvent.ChannelID + ", Data length: " + packet.Length);
 
-                            var opcode = (ServerPacketOpcode)packetReader.ReadByte();
+                        var packetSizeMax = 1024;
+                        var readBuffer = new byte[packetSizeMax];
+                        var packetReader = new PacketReader(readBuffer);
+                        packetReader.BaseStream.Position = 0;
 
-                            if (opcode == ServerPacketOpcode.LoginResponse) 
+                        netEvent.Packet.CopyTo(readBuffer);
+
+                        var opcode = (ServerPacketOpcode)packetReader.ReadByte();
+
+                        if (opcode == ServerPacketOpcode.LoginResponse)
+                        {
+                            var data = new RPacketLogin();
+                            data.Read(packetReader);
+
+                            if (data.LoginOpcode == LoginResponseOpcode.VersionMismatch)
                             {
-                                var data = new RPacketLogin();
-                                data.Read(packetReader);
+                                var serverVersion = $"{data.VersionMajor}.{data.VersionMinor}.{data.VersionPatch}";
+                                var clientVersion = $"{ClientVersionMajor}.{ClientVersionMinor}.{ClientVersionPatch}";
 
-                                if (data.LoginOpcode == LoginResponseOpcode.VersionMismatch)
-                                {
-                                    var serverVersion = $"{data.VersionMajor}.{data.VersionMinor}.{data.VersionPatch}";
-                                    var clientVersion = $"{ClientVersionMajor}.{ClientVersionMinor}.{ClientVersionPatch}";
+                                var cmd = new UnityInstructions();
+                                cmd.Set(UnityInstructionOpcode.ServerResponseMessage,
+                                    $"Version mismatch. Server ver. {serverVersion} Client ver. {clientVersion}");
 
-                                    var cmd = new UnityInstructions();
-                                    cmd.Set(UnityInstructionOpcode.ServerResponseMessage, 
-                                        $"Version mismatch. Server ver. {serverVersion} Client ver. {clientVersion}");
-
-                                    UnityInstructions.Enqueue(cmd);
-                                }
-
-                                if (data.LoginOpcode == LoginResponseOpcode.LoginSuccess)
-                                {
-                                    // Load the main game 'scene'
-                                    UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoadMainScene));
-
-                                    // Update player values
-                                    MenuScript.gameScript.Player = new Player
-                                    {
-                                        Gold = data.Gold,
-                                        StructureHuts = data.StructureHut
-                                    };
-
-                                    UnityInstructions.Enqueue(new UnityInstructions (UnityInstructionOpcode.LoginSuccess));
-
-                                    LastLogin = DateTime.Now;
-                                }
+                                UnityInstructions.Enqueue(cmd);
                             }
 
-                            if (opcode == ServerPacketOpcode.PurchasedItem) 
+                            if (data.LoginOpcode == LoginResponseOpcode.LoginSuccess)
                             {
-                                var data = new RPacketPurchaseItem();
-                                data.Read(packetReader);
+                                // Load the main game 'scene'
+                                UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoadMainScene));
 
-                                var itemResponseOpcode = data.PurchaseItemResponseOpcode;
-
-                                if (itemResponseOpcode == PurchaseItemResponseOpcode.NotEnoughGold) 
+                                // Update player values
+                                MenuScript.gameScript.Player = new Player
                                 {
-                                    var cmd = new UnityInstructions();
-                                    cmd.Set(UnityInstructionOpcode.LogMessage, $"You do not have enough gold for {(ItemType)data.ItemId}.");
+                                    Gold = data.Gold,
+                                    StructureHuts = data.StructureHut
+                                };
 
-                                    UnityInstructions.Enqueue(cmd);
+                                UnityInstructions.Enqueue(new UnityInstructions(UnityInstructionOpcode.LoginSuccess));
 
-                                    // Update the player gold
-                                    GameScript.Player.Gold = data.Gold;
-                                }
+                                LastLogin = DateTime.Now;
+                            }
+                        }
 
-                                if (itemResponseOpcode == PurchaseItemResponseOpcode.Purchased) 
-                                {
-                                    var cmd = new UnityInstructions();
-                                    cmd.Set(UnityInstructionOpcode.LogMessage, $"Bought {(ItemType)data.ItemId} for 25 gold.");
+                        if (opcode == ServerPacketOpcode.PurchasedItem)
+                        {
+                            var data = new RPacketPurchaseItem();
+                            data.Read(packetReader);
 
-                                    UnityInstructions.Enqueue(cmd);
+                            var itemResponseOpcode = data.PurchaseItemResponseOpcode;
 
-                                    // Update the player gold
-                                    GameScript.Player.Gold = data.Gold;
+                            if (itemResponseOpcode == PurchaseItemResponseOpcode.NotEnoughGold)
+                            {
+                                var cmd = new UnityInstructions();
+                                cmd.Set(UnityInstructionOpcode.LogMessage, $"You do not have enough gold for {(ItemType)data.ItemId}.");
 
-                                    // Update the items
-                                    switch ((ItemType)data.ItemId) 
-                                    {
-                                        case ItemType.Hut:
-                                            GameScript.Player.StructureHuts++;
-                                            break;
-                                        case ItemType.Farm:
-                                            break;
-                                    }
-                                }
+                                UnityInstructions.Enqueue(cmd);
+
+                                // Update the player gold
+                                GameScript.Player.Gold = data.Gold;
                             }
 
-                            packetReader.Dispose();
-                            packet.Dispose();
-                            break;
+                            if (itemResponseOpcode == PurchaseItemResponseOpcode.Purchased)
+                            {
+                                var cmd = new UnityInstructions();
+                                cmd.Set(UnityInstructionOpcode.LogMessage, $"Bought {(ItemType)data.ItemId} for 25 gold.");
+
+                                UnityInstructions.Enqueue(cmd);
+
+                                // Update the player gold
+                                GameScript.Player.Gold = data.Gold;
+
+                                // Update the items
+                                switch ((ItemType)data.ItemId)
+                                {
+                                    case ItemType.Hut:
+                                        GameScript.Player.StructureHuts++;
+                                        break;
+                                    case ItemType.Farm:
+                                        break;
+                                }
+                            }
+                        }
+
+                        packetReader.Dispose();
+                        packet.Dispose();
                     }
                 }
             }
@@ -375,7 +405,43 @@ namespace KRU.Networking
                     {
                         // Load timeout scene
                         LoginScript.btnConnect.interactable = true;
-                        LoginScript.loginFeedbackText.text = "Client connection timeout to game server";
+                        LoginScript.loginFeedbackText.text = "Timed out from game server";
+
+                        MenuScript.LoadTimeoutDisconnectScene();
+                        MenuScript.gameScript.InGame = false;
+
+                        // Reset player values
+                        MenuScript.gameScript.Player = null;
+
+                        // Clear terminal output
+                        //TerminalScript.
+                    }
+
+                    if (opcode == UnityInstructionOpcode.Disconnect) 
+                    {
+                        // Load timeout scene
+                        LoginScript.btnConnect.interactable = true;
+
+                        var loginFeedbackText = LoginScript.loginFeedbackText;
+
+                        switch ((DisconnectOpcode)cmd.Value[0]) 
+                        {
+                            case DisconnectOpcode.Disconnected:
+                                loginFeedbackText.text = "Disconnected from game server";
+                                break;
+                            case DisconnectOpcode.Maintenance:
+                                loginFeedbackText.text = "Server is going down for maintenance";
+                                break;
+                            case DisconnectOpcode.Restarting:
+                                loginFeedbackText.text = "Server is restarting";
+                                break;
+                            case DisconnectOpcode.Kicked:
+                                loginFeedbackText.text = "You were kicked";
+                                break;
+                            case DisconnectOpcode.Banned:
+                                loginFeedbackText.text = "You were banned";
+                                break;
+                        }
 
                         MenuScript.LoadTimeoutDisconnectScene();
                         MenuScript.gameScript.InGame = false;
@@ -455,6 +521,7 @@ namespace KRU.Networking
         LogMessage,
         ServerResponseMessage,
         Timeout,
+        Disconnect,
         LoginSuccess,
         Quit
     }
